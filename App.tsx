@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import {
-  EBGaramond_400Regular,
-  EBGaramond_500Medium,
-  EBGaramond_600SemiBold,
-  EBGaramond_700Bold,
+  NotoSans_400Regular,
+  NotoSans_500Medium,
+  NotoSans_600SemiBold,
+  NotoSans_700Bold,
   useFonts,
-} from '@expo-google-fonts/eb-garamond';
+} from '@expo-google-fonts/noto-sans';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -22,7 +22,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ReaderScreen } from './src/screens/ReaderScreen';
 import { homeStyles } from './src/screens/homeStyles';
 import { StoreProvider, useStore } from './src/store';
-import { colors, fonts } from './src/theme';
+import { colors } from './src/theme';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 type Route =
@@ -43,8 +43,8 @@ function Splash() {
     >
       <Text
         style={{
-          fontFamily: fonts.bold,
           fontSize: 36,
+          fontWeight: '700',
           color: colors.text,
         }}
       >
@@ -55,7 +55,7 @@ function Splash() {
 }
 
 function AppShell() {
-  const { ready, user, login, logout, showToast } = useStore();
+  const { ready, user, logout, showToast } = useStore();
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [tab, setTab] = useState<AppTab>('home');
   const [stack, setStack] = useState<Route[]>([]);
@@ -174,8 +174,7 @@ function AppShell() {
       ) : (
         <LoginScreen
           mode={authMode}
-          onLoggedIn={(next) => {
-            login(next);
+          onLoggedIn={() => {
             setTab('home');
             goMain();
           }}
@@ -183,7 +182,7 @@ function AppShell() {
           onSignup={() => setAuthMode('signup')}
           onBackToLogin={() => setAuthMode('login')}
           onForgotSent={() => {
-            showToast('Lien envoyé. Vérifie tes mails.');
+            showToast('Mot de passe mis à jour. Connecte-toi.');
             setAuthMode('login');
           }}
         />
@@ -195,10 +194,10 @@ function AppShell() {
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    EBGaramond_400Regular,
-    EBGaramond_500Medium,
-    EBGaramond_600SemiBold,
-    EBGaramond_700Bold,
+    NotoSans_400Regular,
+    NotoSans_500Medium,
+    NotoSans_600SemiBold,
+    NotoSans_700Bold,
   });
 
   if (!fontsLoaded) {

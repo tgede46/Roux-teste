@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, fonts, TAB_BAR_RESERVE, uiFont } from '../theme';
+import { colors, fonts, radius, TAB_BAR_RESERVE, uiFont } from '../theme';
 
 export const homeStyles = StyleSheet.create({
   safeArea: {
@@ -10,13 +10,13 @@ export const homeStyles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 18,
-    paddingTop: 6,
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 24,
   },
   tabSceneContent: {
-    paddingHorizontal: 18,
-    paddingTop: 6,
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: TAB_BAR_RESERVE,
   },
   header: {
@@ -46,20 +46,23 @@ export const homeStyles = StyleSheet.create({
     color: colors.text,
   },
   title: {
-    marginTop: 10,
+    marginTop: 2,
     marginBottom: 12,
     fontFamily: fonts.bold,
     fontSize: 34,
+    lineHeight: 41,
+    letterSpacing: 0.37,
     color: colors.text,
   },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.white,
-    borderRadius: 22,
+    backgroundColor: colors.fill,
+    borderRadius: radius.search,
+    minHeight: 44,
     height: 44,
-    paddingHorizontal: 14,
-    gap: 8,
+    paddingHorizontal: 12,
+    gap: 6,
     marginBottom: 22,
   },
   searchInput: {
@@ -72,8 +75,44 @@ export const homeStyles = StyleSheet.create({
   sectionTitle: {
     fontFamily: fonts.bold,
     fontSize: 22,
+    letterSpacing: 0.35,
     color: colors.text,
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  groupHeader: {
+    fontFamily: uiFont,
+    fontSize: 13,
+    color: colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    marginLeft: 16,
+    marginBottom: 6,
+    marginTop: 8,
+  },
+  group: {
+    backgroundColor: colors.white,
+    borderRadius: radius.group,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  groupSeparator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.separator,
+  },
+  groupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    minHeight: 44,
+    backgroundColor: colors.white,
+  },
+  chevronSmall: {
+    fontSize: 22,
+    color: '#C7C7CC',
+    marginTop: -1,
   },
   categories: {
     flexDirection: 'row',
@@ -88,7 +127,7 @@ export const homeStyles = StyleSheet.create({
   category: {
     width: '100%',
     aspectRatio: 1,
-    borderRadius: 16,
+    borderRadius: radius.card,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -132,7 +171,7 @@ export const homeStyles = StyleSheet.create({
   },
   followMeta: {
     fontFamily: uiFont,
-    fontSize: 13,
+    fontSize: 15,
     color: colors.muted,
     marginTop: 1,
   },
@@ -141,14 +180,14 @@ export const homeStyles = StyleSheet.create({
     gap: 12,
   },
   product: {
-    borderRadius: 20,
+    borderRadius: radius.card,
     overflow: 'hidden',
     width: '100%',
     backgroundColor: colors.white,
   },
   productArt: {
     width: '100%',
-    height: 120,
+    height: 128,
   },
   productInfo: {
     paddingHorizontal: 12,
@@ -169,10 +208,10 @@ export const homeStyles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   tabBarShell: {
-    borderRadius: 28,
+    borderRadius: 26,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.tabBarBorder,
@@ -195,7 +234,7 @@ export const homeStyles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48,
+    minHeight: 44,
   },
   tabItemInner: {
     alignItems: 'center',
@@ -205,9 +244,9 @@ export const homeStyles = StyleSheet.create({
   },
   tabLabel: {
     fontFamily: uiFont,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '500',
-    letterSpacing: 0.1,
+    letterSpacing: 0.06,
     color: colors.tabInactive,
     textAlign: 'center',
   },
@@ -234,8 +273,8 @@ export const homeStyles = StyleSheet.create({
     marginBottom: 16,
   },
   categorySelected: {
-    borderWidth: 3,
-    borderColor: colors.text,
+    borderWidth: 2,
+    borderColor: colors.tint,
   },
   heartWrap: {
     flexDirection: 'row',
@@ -280,8 +319,8 @@ export const homeStyles = StyleSheet.create({
   },
   primaryBtn: {
     backgroundColor: colors.text,
-    borderRadius: 28,
-    height: 56,
+    borderRadius: radius.button,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -292,12 +331,11 @@ export const homeStyles = StyleSheet.create({
     color: colors.white,
   },
   ghostBtn: {
-    borderRadius: 28,
-    height: 52,
+    borderRadius: radius.button,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colors.text,
+    backgroundColor: colors.fill,
   },
   ghostBtnText: {
     fontFamily: fonts.regular,
@@ -306,9 +344,7 @@ export const homeStyles = StyleSheet.create({
   },
   post: {
     backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 12,
+    padding: 16,
   },
   postTime: {
     fontFamily: fonts.regular,
@@ -318,9 +354,9 @@ export const homeStyles = StyleSheet.create({
   },
   profileCard: {
     backgroundColor: colors.white,
-    borderRadius: 22,
-    padding: 18,
-    marginBottom: 18,
+    borderRadius: radius.group,
+    padding: 16,
+    marginBottom: 16,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -350,8 +386,8 @@ export const homeStyles = StyleSheet.create({
   stat: {
     width: '100%',
     backgroundColor: colors.white,
-    borderRadius: 16,
-    paddingVertical: 14,
+    borderRadius: radius.group,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   statValue: {
@@ -372,11 +408,18 @@ export const homeStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: 12,
+    rowGap: 16,
   },
   productTile: {
-    width: '48%',
-    marginBottom: 4,
+    width: '48.5%',
+    marginBottom: 2,
+    borderRadius: radius.card,
+    backgroundColor: colors.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
   greeting: {
     fontFamily: fonts.regular,
@@ -385,9 +428,8 @@ export const homeStyles = StyleSheet.create({
     marginTop: 4,
   },
   emptyCard: {
-    backgroundColor: colors.white,
-    borderRadius: 18,
-    padding: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 4,
     marginBottom: 16,
   },
   emptyTitle: {
@@ -420,10 +462,9 @@ export const homeStyles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: 14,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: colors.text,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -440,7 +481,7 @@ export const homeStyles = StyleSheet.create({
   },
   composer: {
     backgroundColor: colors.white,
-    borderRadius: 18,
+    borderRadius: radius.group,
     padding: 12,
     marginBottom: 16,
   },
@@ -467,19 +508,18 @@ export const homeStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.white,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 44,
   },
   orderRow: {
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 44,
   },
   modalBackdrop: {
     flex: 1,
@@ -488,10 +528,16 @@ export const homeStyles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+    padding: 16,
     paddingBottom: 28,
+  },
+  destructiveText: {
+    fontFamily: fonts.regular,
+    fontSize: 17,
+    color: colors.destructive,
+    textAlign: 'center',
   },
   nameInput: {
     fontFamily: fonts.semibold,
@@ -535,19 +581,36 @@ export const homeStyles = StyleSheet.create({
     gap: 12,
     width: '100%',
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   dropRowUnread: {
-    borderWidth: 1.5,
-    borderColor: colors.text,
+    backgroundColor: '#FFF8F5',
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: colors.starship,
+  },
+  payInput: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: colors.text,
+    height: 48,
+    paddingHorizontal: 14,
+    fontFamily: fonts.regular,
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 10,
+  },
+  payRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  payInputHalf: {
+    flex: 1,
   },
   memberHint: {
     fontFamily: fonts.semibold,
@@ -583,10 +646,10 @@ export const homeStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 10,
-    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     gap: 12,
+    minHeight: 64,
   },
   libraryThumb: {
     width: 56,

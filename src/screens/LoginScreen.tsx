@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthInput } from '../components/AuthInput';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { hapticError } from '../haptics';
+import { useStore } from '../store';
 import { validateEmail, validateName, validatePassword } from '../validation';
 import { loginStyles as styles } from './loginStyles';
 
@@ -36,7 +37,7 @@ export function LoginScreen({
   onForgotSent,
 }: {
   mode: 'login' | 'signup' | 'forgot';
-  onLoggedIn: (user: { name: string; email: string }) => void;
+  onLoggedIn: () => void;
   onForgot: () => void;
   onSignup: () => void;
   onBackToLogin: () => void;
@@ -47,6 +48,7 @@ export function LoginScreen({
   const [password, setPassword] = useState('');
   const [pressedLink, setPressedLink] = useState<'forgot' | 'create' | null>(null);
   const [loading, setLoading] = useState(false);
+  const { signIn, signUp, resetPassword } = useStore();
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
   const emailShake = useRef(new Animated.Value(0)).current;
@@ -66,7 +68,7 @@ export function LoginScreen({
     const next = {
       name: mode === 'signup' ? validateName(name) ?? undefined : undefined,
       email: validateEmail(email) ?? undefined,
-      password: mode !== 'forgot' ? validatePassword(password) ?? undefined : undefined,
+      password: validatePassword(password) ?? undefined,
     };
     setErrors(next);
 
@@ -96,17 +98,31 @@ export function LoginScreen({
     }).start();
 
     setLoading(true);
-    setTimeout(() => {
+    void (async () => {
+      const result =
+        mode === 'signup'
+          ? await signUp(name.trim(), email, password)
+          : mode === 'forgot'
+            ? await resetPassword(email, password)
+            : await signIn(email, password);
       setLoading(false);
+      if (!result.ok) {
+        setErrors((prev) => ({
+          ...prev,
+          email: result.error.includes('mot de passe') ? undefined : result.error,
+          password: result.error.toLowerCase().includes('mot de passe') ? result.error : prev.password,
+        }));
+        if (result.error.toLowerCase().includes('mot de passe')) shakeField(passwordShake);
+        else shakeField(emailShake);
+        hapticError();
+        return;
+      }
       if (mode === 'forgot') {
         onForgotSent();
         return;
       }
-      onLoggedIn({
-        name: (name.trim() || email.trim().split('@')[0] || 'Roux').replace(/\./g, ' '),
-        email: email.trim().toLowerCase(),
-      });
-    }, 1100);
+      onLoggedIn();
+    })();
   };
 
   const pulseScale = buttonPulse.interpolate({
@@ -175,23 +191,21 @@ export function LoginScreen({
             autoComplete="email"
           />
 
-          {mode !== 'forgot' ? (
-            <AuthInput
-              label="Mot de passe"
-              delay={280}
-              shake={passwordShake}
-              error={errors.password}
-              value={password}
-              onChangeText={(value) => {
-                setPassword(value);
-                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-              }}
-              placeholder="6 caractères, lettres et chiffres"
-              isPassword
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          ) : null}
+          <AuthInput
+            label={mode === 'forgot' ? 'Nouveau mot de passe' : 'Mot de passe'}
+            delay={280}
+            shake={passwordShake}
+            error={errors.password}
+            value={password}
+            onChangeText={(value) => {
+              setPassword(value);
+              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+            }}
+            placeholder="6 caractères, lettres et chiffres"
+            isPassword
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
 
           {mode === 'login' ? (
             <FadeSlideIn delay={360}>
@@ -244,7 +258,7 @@ export function LoginScreen({
                       {mode === 'signup'
                         ? 'Créer mon compte'
                         : mode === 'forgot'
-                          ? 'Envoyer le lien'
+                          ? 'Enregistrer'
                           : 'Continuer'}
                     </Text>
                   )}
@@ -279,7 +293,11 @@ export function LoginScreen({
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#111111" />
           <Text style={styles.overlayText}>
-            {mode === 'forgot' ? 'Envoi du lien...' : mode === 'signup' ? 'Création du compte...' : 'Connexion...'}
+            {mode === 'forgot'
+              ? 'Mise à jour du mot de passe...'
+              : mode === 'signup'
+                ? 'Création du compte...'
+                : 'Connexion...'}
           </Text>
         </View>
       ) : null}

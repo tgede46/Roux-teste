@@ -1,30 +1,43 @@
 export const fonts = {
-  regular: 'EBGaramond_400Regular',
-  medium: 'EBGaramond_500Medium',
-  semibold: 'EBGaramond_600SemiBold',
-  bold: 'EBGaramond_700Bold',
+  regular: 'NotoSans_400Regular',
+  medium: 'NotoSans_500Medium',
+  semibold: 'NotoSans_600SemiBold',
+  bold: 'NotoSans_700Bold',
 };
 
-/** System UI type for controls, captions, and fields. Display serif stays on titles. */
-export const uiFont = undefined;
+/** UI chrome — Noto Sans reads close to SF / Roboto on device. */
+export const uiFont = fonts.regular;
 
 export const colors = {
-  text: '#111111',
+  text: '#000000',
   white: '#FFFFFF',
-  teal: '#00B7C2',
-  placeholder: '#6B6B6B',
-  muted: '#5C5C5C',
-  background: '#F2F5F2',
+  tint: '#E85C2A',
+  teal: '#007AFF',
+  placeholder: '#636366',
+  muted: '#636366',
+  background: '#F2F2F7',
+  fill: '#E5E5EA',
+  separator: 'rgba(60, 60, 67, 0.29)',
   cream: '#FFF6EA',
-  jungle: '#2FA24F',
+  jungle: '#34C759',
   starship: '#E85C2A',
   coral: '#F3C84A',
   lavender: '#C9A4E6',
-  heart: '#E85C2A',
-  tabInactive: '#767676',
-  tabBarFill: 'rgba(255,255,255,0.72)',
-  tabBarOpaque: '#F7F8F7',
-  tabBarBorder: 'rgba(17,17,17,0.08)',
+  heart: '#FF3B30',
+  systemGreen: '#34C759',
+  destructive: '#FF3B30',
+  tabInactive: '#636366',
+  tabBarFill: 'rgba(255, 255, 255, 0.62)',
+  tabBarOpaque: '#F9F9F9',
+  tabBarBorder: 'rgba(255, 255, 255, 0.55)',
+};
+
+export const radius = {
+  group: 10,
+  card: 12,
+  button: 14,
+  search: 10,
+  pill: 22,
 };
 
 export const TAB_BAR_RESERVE = 108;

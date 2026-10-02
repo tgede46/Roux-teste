@@ -47,7 +47,7 @@ export function TabBar({ active, onChange }: Props) {
     >
       <View style={styles.tabBarShell}>
         {useGlass ? (
-          <BlurView intensity={40} tint="systemChromeMaterialLight" style={styles.tabBarBlur} />
+          <BlurView intensity={40} tint="systemMaterialLight" style={styles.tabBarBlur} />
         ) : null}
         <View
           style={[
@@ -75,7 +75,7 @@ export function TabBar({ active, onChange }: Props) {
                 <Ionicons
                   name={isActive ? tab.filled : tab.outline}
                   size={24}
-                  color={isActive ? colors.text : colors.tabInactive}
+                  color={isActive ? colors.tint : colors.tabInactive}
                 />
                 <Text
                   numberOfLines={1}

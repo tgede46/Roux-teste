@@ -4,6 +4,7 @@ import { Image, ScrollView, Text, TextInput, View } from 'react-native';
 import { Avatar } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
 import {
@@ -141,31 +142,34 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               body="Abonne-toi à un atelier : drops, lives et fichiers membres arrivent ici, avant le catalogue."
             />
           ) : (
-            memberDrops.map((drop) => {
-              const creator = getCreator(drop.creatorId);
-              if (!creator) return null;
-              const unread = notifs && !readDropIds.includes(drop.id);
-              return (
-                <PressableScale
-                  key={drop.id}
-                  contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
-                  onPress={() => {
-                    markDropRead(drop.id);
-                    if (drop.productId) onOpenProduct(drop.productId);
-                    else onOpenCreator(drop.creatorId);
-                  }}
-                >
-                  <Avatar photo={creator.photo} color={creator.color} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.followName}>{drop.title}</Text>
-                    <Text style={styles.followMeta}>
-                      {dropKindLabel(drop.kind)} · {creator.name} · {drop.time}
-                    </Text>
-                  </View>
-                  {unread ? <View style={styles.unreadDot} /> : null}
-                </PressableScale>
-              );
-            })
+            <Group inset={60}>
+              {memberDrops.map((drop) => {
+                const creator = getCreator(drop.creatorId);
+                if (!creator) return null;
+                const unread = notifs && !readDropIds.includes(drop.id);
+                return (
+                  <PressableScale
+                    key={drop.id}
+                    contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
+                    onPress={() => {
+                      markDropRead(drop.id);
+                      if (drop.productId) onOpenProduct(drop.productId);
+                      else onOpenCreator(drop.creatorId);
+                    }}
+                  >
+                    <Avatar photo={creator.photo} color={creator.color} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.followName}>{drop.title}</Text>
+                      <Text style={styles.followMeta}>
+                        {dropKindLabel(drop.kind)} · {creator.name} · {drop.time}
+                      </Text>
+                    </View>
+                    {unread ? <View style={styles.unreadDot} /> : null}
+                    <Text style={styles.chevronSmall}>›</Text>
+                  </PressableScale>
+                );
+              })}
+            </Group>
           )}
           {memberProducts.length > 0 ? (
             <>
@@ -215,19 +219,22 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
       {creators.length > 0 ? (
         <FadeSlideIn delay={200}>
           <Text style={styles.sectionTitle}>Créateurs</Text>
-          {creators.map((creator) => (
-            <PressableScale
-              key={creator.id}
-              contentStyle={styles.followRow}
-              onPress={() => onOpenCreator(creator.id)}
-            >
-              <Avatar photo={creator.photo} color={creator.color} />
-              <View>
-                <Text style={styles.followName}>{creator.name}</Text>
-                <Text style={styles.followMeta}>{creator.meta}</Text>
-              </View>
-            </PressableScale>
-          ))}
+          <Group inset={60}>
+            {creators.map((creator) => (
+              <PressableScale
+                key={creator.id}
+                contentStyle={styles.groupRow}
+                onPress={() => onOpenCreator(creator.id)}
+              >
+                <Avatar photo={creator.photo} color={creator.color} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.followName}>{creator.name}</Text>
+                  <Text style={styles.followMeta}>{creator.meta}</Text>
+                </View>
+                <Text style={styles.chevronSmall}>›</Text>
+              </PressableScale>
+            ))}
+          </Group>
         </FadeSlideIn>
       ) : null}
 
@@ -239,19 +246,22 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
             body="Ouvre un atelier et appuie sur Suivre. Le Club te montrera leurs posts."
           />
         ) : (
-          followed.map((follow) => (
-            <PressableScale
-              key={follow.id}
-              contentStyle={styles.followRow}
-              onPress={() => onOpenCreator(follow.id)}
-            >
-              <Avatar photo={follow.photo} color={follow.color} />
-              <View>
-                <Text style={styles.followName}>{follow.name}</Text>
-                <Text style={styles.followMeta}>{follow.meta}</Text>
-              </View>
-            </PressableScale>
-          ))
+          <Group inset={60}>
+            {followed.map((follow) => (
+              <PressableScale
+                key={follow.id}
+                contentStyle={styles.groupRow}
+                onPress={() => onOpenCreator(follow.id)}
+              >
+                <Avatar photo={follow.photo} color={follow.color} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.followName}>{follow.name}</Text>
+                  <Text style={styles.followMeta}>{follow.meta}</Text>
+                </View>
+                <Text style={styles.chevronSmall}>›</Text>
+              </PressableScale>
+            ))}
+          </Group>
         )}
       </FadeSlideIn>
 

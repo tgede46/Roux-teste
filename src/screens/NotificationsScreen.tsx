@@ -2,6 +2,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { Avatar } from '../components/Avatar';
 import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { DROPS, dropKindLabel, getCreator } from '../data';
 import { hapticSelect } from '../haptics';
@@ -49,31 +50,34 @@ export function NotificationsScreen({ onBack, onOpenCreator, onOpenProduct }: Pr
             body="Abonne-toi à un atelier : leurs drops arrivent ici le jour J."
           />
         ) : (
-          items.map((drop) => {
-            const creator = getCreator(drop.creatorId);
-            if (!creator) return null;
-            const unread = notifs && !readDropIds.includes(drop.id);
-            return (
-              <PressableScale
-                key={drop.id}
-                contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
-                onPress={() => {
-                  markDropRead(drop.id);
-                  if (drop.productId) onOpenProduct(drop.productId);
-                  else onOpenCreator(drop.creatorId);
-                }}
-              >
-                <Avatar photo={creator.photo} color={creator.color} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.followName}>{drop.title}</Text>
-                  <Text style={styles.followMeta}>
-                    {dropKindLabel(drop.kind)} · {creator.name} · {drop.time}
-                  </Text>
-                </View>
-                {unread ? <View style={styles.unreadDot} /> : null}
-              </PressableScale>
-            );
-          })
+          <Group inset={60}>
+            {items.map((drop) => {
+              const creator = getCreator(drop.creatorId);
+              if (!creator) return null;
+              const unread = notifs && !readDropIds.includes(drop.id);
+              return (
+                <PressableScale
+                  key={drop.id}
+                  contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
+                  onPress={() => {
+                    markDropRead(drop.id);
+                    if (drop.productId) onOpenProduct(drop.productId);
+                    else onOpenCreator(drop.creatorId);
+                  }}
+                >
+                  <Avatar photo={creator.photo} color={creator.color} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.followName}>{drop.title}</Text>
+                    <Text style={styles.followMeta}>
+                      {dropKindLabel(drop.kind)} · {creator.name} · {drop.time}
+                    </Text>
+                  </View>
+                  {unread ? <View style={styles.unreadDot} /> : null}
+                  <Text style={styles.chevronSmall}>›</Text>
+                </PressableScale>
+              );
+            })}
+          </Group>
         )}
       </FadeSlideIn>
     </ScrollView>

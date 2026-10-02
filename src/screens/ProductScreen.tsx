@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, ScrollView, Text, View } from 'react-native';
 import { Avatar } from '../components/Avatar';
+import { CheckoutSheet } from '../components/CheckoutSheet';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
 import { fileKindLabel, getCreator, getProduct, getProductFile, relatedProducts } from '../data';
 import { hapticLight, hapticSuccess } from '../haptics';
+import type { ChargeOk } from '../payment';
 import { useStore } from '../store';
 import { colors } from '../theme';
 import { homeStyles as styles } from './homeStyles';
@@ -50,17 +52,15 @@ export function ProductScreen({
   const liked = isFavorite(product.id);
   const related = relatedProducts(product);
 
-  const pay = () => {
+  const pay = (charge: ChargeOk) => {
     if (paying) return;
     setPaying(true);
-    setTimeout(() => {
-      buy(product.id);
-      hapticSuccess();
-      showToast(`${product.name} est dans ta Library`);
-      setPaying(false);
-      setSheet(false);
-      onOpenFile(product.id);
-    }, 900);
+    buy(product.id, charge);
+    hapticSuccess();
+    showToast(`${product.name} est dans ta Library`);
+    setPaying(false);
+    setSheet(false);
+    onOpenFile(product.id);
   };
 
   return (
@@ -154,32 +154,15 @@ export function ProductScreen({
         ) : null}
       </ScrollView>
 
-      <Modal visible={sheet} transparent animationType="slide" onRequestClose={() => setSheet(false)}>
-        <View style={styles.modalBackdrop}>
-          <Pressable
-            style={{ flex: 1 }}
-            onPress={() => {
-              if (!paying) setSheet(false);
-            }}
-          />
-          <View style={styles.sheet}>
-            <Text style={styles.sectionTitle}>Confirmer l’achat</Text>
-            <Text style={styles.detailBlurb}>
-              {product.name} · {product.price} €. Paiement simulé, le fichier rejoint ta Library.
-            </Text>
-            <PressableScale contentStyle={styles.primaryBtn} onPress={pay} disabled={paying}>
-              {paying ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryBtnText}>Payer {product.price} €</Text>
-              )}
-            </PressableScale>
-            <PressableScale contentStyle={styles.ghostBtn} onPress={() => setSheet(false)} disabled={paying}>
-              <Text style={styles.ghostBtnText}>Annuler</Text>
-            </PressableScale>
-          </View>
-        </View>
-      </Modal>
+      <CheckoutSheet
+        visible={sheet}
+        title="Payer"
+        subtitle={`${product.name} · ${product.price} €. Carte sandbox, le fichier rejoint ta Library.`}
+        amountLabel={`Payer ${product.price} €`}
+        busy={paying}
+        onClose={() => setSheet(false)}
+        onPaid={pay}
+      />
     </>
   );
 }

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { PRODUCTS, fileKindLabel, getProductFile } from '../data';
 import { hapticSelect } from '../haptics';
@@ -77,31 +78,33 @@ export function LibraryScreen({ onOpenProduct, onOpenFile, onBrowse }: Props) {
             onAction={onBrowse}
           />
         ) : (
-          items.map((product) => {
-            const kind = accessKind(product.id);
-            const file = getProductFile(product.id);
-            const canOpen = kind != null;
-            return (
-              <PressableScale
-                key={product.id}
-                contentStyle={styles.libraryRow}
-                onPress={() => (canOpen ? onOpenFile(product.id) : onOpenProduct(product.id))}
-              >
-                <Image source={product.image} style={styles.libraryThumb} resizeMode="cover" />
-                <View style={styles.libraryMeta}>
-                  <Text style={styles.followName} numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <Text style={styles.followMeta}>
-                    {file ? fileKindLabel(file.kind) : product.category}
-                    {kind ? ` · ${sourceLabel(kind)}` : ''}
-                    {canOpen && isOpened(product.id) ? ' · Ouvert' : canOpen ? ' · Nouveau' : ''}
-                  </Text>
-                </View>
-                <Text style={styles.followMeta}>{canOpen ? 'Ouvrir' : 'Voir'}</Text>
-              </PressableScale>
-            );
-          })
+          <Group inset={80}>
+            {items.map((product) => {
+              const kind = accessKind(product.id);
+              const file = getProductFile(product.id);
+              const canOpen = kind != null;
+              return (
+                <PressableScale
+                  key={product.id}
+                  contentStyle={styles.libraryRow}
+                  onPress={() => (canOpen ? onOpenFile(product.id) : onOpenProduct(product.id))}
+                >
+                  <Image source={product.image} style={styles.libraryThumb} resizeMode="cover" />
+                  <View style={styles.libraryMeta}>
+                    <Text style={styles.followName} numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                    <Text style={styles.followMeta}>
+                      {file ? fileKindLabel(file.kind) : product.category}
+                      {kind ? ` · ${sourceLabel(kind)}` : ''}
+                      {canOpen && isOpened(product.id) ? ' · Ouvert' : canOpen ? ' · Nouveau' : ''}
+                    </Text>
+                  </View>
+                  <Text style={styles.chevronSmall}>›</Text>
+                </PressableScale>
+              );
+            })}
+          </Group>
         )}
       </FadeSlideIn>
     </ScrollView>

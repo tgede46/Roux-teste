@@ -4,7 +4,7 @@ import { colors, fonts, uiFont } from '../theme';
 export const loginStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.background,
   },
   flex: {
     flex: 1,
@@ -40,24 +40,29 @@ export const loginStyles = StyleSheet.create({
     color: colors.text,
   },
   field: {
-    marginBottom: 18,
+    marginBottom: 12,
   },
   label: {
     fontFamily: uiFont,
-    fontSize: 17,
-    color: colors.text,
-    marginBottom: 8,
+    fontSize: 13,
+    color: colors.muted,
+    marginBottom: 6,
   },
   inputWrap: {
-    borderWidth: 1.5,
-    borderColor: colors.text,
-    borderRadius: 26,
+    backgroundColor: colors.fill,
+    borderRadius: 10,
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   inputWrapFocused: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
     borderColor: colors.teal,
   },
   inputWrapError: {
-    borderColor: '#C0392B',
+    borderWidth: 1.5,
+    borderColor: '#FF3B30',
+    backgroundColor: colors.white,
   },
   fieldError: {
     fontFamily: uiFont,
@@ -101,14 +106,14 @@ export const loginStyles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 56,
-    borderRadius: 28,
+    height: 50,
+    borderRadius: 14,
     backgroundColor: colors.text,
   },
   button: {
     backgroundColor: colors.text,
-    borderRadius: 28,
-    height: 56,
+    borderRadius: 14,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },

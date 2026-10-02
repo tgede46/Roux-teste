@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { getCreator, getProduct } from '../data';
 import { hapticError, hapticSelect } from '../haptics';
@@ -48,7 +49,7 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
   };
 
   const confirmLogout = () => {
-    Alert.alert('Se déconnecter', 'Tes achats restent sur cet appareil.', [
+    Alert.alert('Se déconnecter', 'Tes achats restent liés à ce compte sur l’appareil.', [
       { text: 'Annuler', style: 'cancel' },
       { text: 'Se déconnecter', style: 'destructive', onPress: onLogout },
     ]);
@@ -98,90 +99,107 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
           </PressableScale>
         </View>
 
-        <View style={styles.settingRow}>
-          <View style={{ flex: 1, paddingRight: 12 }}>
-            <Text style={styles.followName}>Notifications Club</Text>
-            <Text style={styles.followMeta}>Drops et lives des ateliers dont tu es membre</Text>
+        <Text style={styles.groupHeader}>Notifications</Text>
+        <Group inset={16}>
+          <View style={styles.settingRow}>
+            <View style={{ flex: 1, paddingRight: 12 }}>
+              <Text style={styles.followName}>Drops Club</Text>
+              <Text style={styles.followMeta}>Ateliers dont tu es membre</Text>
+            </View>
+            <Switch
+              value={notifs}
+              onValueChange={(value) => {
+                setNotifs(value);
+                hapticSelect();
+                showToast(value ? 'Drops activés' : 'Drops coupés');
+              }}
+              trackColor={{ false: '#E5E5EA', true: colors.systemGreen }}
+              ios_backgroundColor="#E5E5EA"
+              thumbColor={colors.white}
+            />
           </View>
-          <Switch
-            value={notifs}
-            onValueChange={(value) => {
-              setNotifs(value);
-              hapticSelect();
-              showToast(value ? 'Drops activés' : 'Drops coupés');
-            }}
-            trackColor={{ false: '#D8DDD8', true: colors.teal }}
-            thumbColor={colors.white}
-          />
-        </View>
+        </Group>
 
-        <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Abonnements</Text>
+        <Text style={styles.groupHeader}>Abonnements</Text>
         {Object.keys(memberships).length === 0 ? (
           <Text style={styles.empty}>Aucun palier. Ouvre un atelier et appuie sur S’abonner.</Text>
         ) : (
-          Object.entries(memberships).map(([creatorId, price]) => {
-            const creator = getCreator(creatorId);
-            if (!creator) return null;
-            const tier = creator.tiers.find((item) => item.price === price);
-            return (
-              <View key={creatorId} style={styles.orderRow}>
-                <PressableScale onPress={() => onOpenCreator(creatorId)} style={{ flex: 1 }}>
-                  <Text style={styles.followName}>{creator.name}</Text>
-                  <Text style={styles.followMeta}>
-                    {tier?.name ?? 'Palier'} · {price} €/mois
-                  </Text>
-                </PressableScale>
-                <PressableScale
-                  onPress={() => {
-                    Alert.alert('Résilier', `Arrêter ${creator.name} ?`, [
-                      { text: 'Non', style: 'cancel' },
-                      {
-                        text: 'Résilier',
-                        style: 'destructive',
-                        onPress: () => {
-                          unsubscribe(creatorId);
-                          showToast('Abonnement résilié');
+          <Group inset={16}>
+            {Object.entries(memberships).map(([creatorId, price]) => {
+              const creator = getCreator(creatorId);
+              if (!creator) return null;
+              const tier = creator.tiers.find((item) => item.price === price);
+              return (
+                <View key={creatorId} style={styles.orderRow}>
+                  <PressableScale onPress={() => onOpenCreator(creatorId)} style={{ flex: 1 }}>
+                    <Text style={styles.followName}>{creator.name}</Text>
+                    <Text style={styles.followMeta}>
+                      {tier?.name ?? 'Palier'} · {price} €/mois
+                    </Text>
+                  </PressableScale>
+                  <PressableScale
+                    onPress={() => {
+                      Alert.alert('Résilier', `Arrêter ${creator.name} ?`, [
+                        { text: 'Non', style: 'cancel' },
+                        {
+                          text: 'Résilier',
+                          style: 'destructive',
+                          onPress: () => {
+                            unsubscribe(creatorId);
+                            showToast('Abonnement résilié');
+                          },
                         },
-                      },
-                    ]);
-                  }}
-                >
-                  <Text style={styles.followMeta}>Résilier</Text>
-                </PressableScale>
-              </View>
-            );
-          })
+                      ]);
+                    }}
+                  >
+                    <Text style={{ color: colors.destructive, fontSize: 15 }}>Résilier</Text>
+                  </PressableScale>
+                </View>
+              );
+            })}
+          </Group>
         )}
 
-        <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Commandes</Text>
+        <Text style={styles.groupHeader}>Commandes</Text>
         {orders.length === 0 ? (
           <Text style={styles.empty}>Aucun achat pour le moment.</Text>
         ) : (
-          orders.slice(0, 8).map((order) => {
-            const product = getProduct(order.productId);
-            if (!product) return null;
-            const date = new Date(order.at);
-            return (
-              <PressableScale
-                key={order.id}
-                contentStyle={styles.orderRow}
-                onPress={() => onOpenProduct(product.id)}
-              >
-                <View>
-                  <Text style={styles.followName}>{product.name}</Text>
-                  <Text style={styles.followMeta}>
-                    {date.toLocaleDateString('fr-FR')} · {order.price} €
-                  </Text>
-                </View>
-                <Text style={styles.followMeta}>Ouvrir</Text>
-              </PressableScale>
-            );
-          })
+          <Group inset={16}>
+            {orders.slice(0, 8).map((order) => {
+              const date = new Date(order.at);
+              const product = order.productId ? getProduct(order.productId) : null;
+              const creator = order.creatorId ? getCreator(order.creatorId) : null;
+              const title =
+                order.kind === 'membership'
+                  ? `Abo ${creator?.name ?? 'atelier'}`
+                  : (product?.name ?? 'Produit');
+              return (
+                <PressableScale
+                  key={order.id}
+                  contentStyle={styles.orderRow}
+                  onPress={() => {
+                    if (order.kind === 'membership' && order.creatorId) onOpenCreator(order.creatorId);
+                    else if (product) onOpenProduct(product.id);
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.followName}>{title}</Text>
+                    <Text style={styles.followMeta}>
+                      {date.toLocaleDateString('fr-FR')} · {order.price} € · {order.brand} ••{order.last4}
+                    </Text>
+                  </View>
+                  <Text style={styles.chevronSmall}>›</Text>
+                </PressableScale>
+              );
+            })}
+          </Group>
         )}
 
-        <PressableScale contentStyle={[styles.ghostBtn, { marginTop: 12 }]} onPress={confirmLogout}>
-          <Text style={styles.ghostBtnText}>Se déconnecter</Text>
-        </PressableScale>
+        <Group>
+          <PressableScale contentStyle={styles.orderRow} onPress={confirmLogout}>
+            <Text style={styles.destructiveText}>Se déconnecter</Text>
+          </PressableScale>
+        </Group>
       </FadeSlideIn>
     </ScrollView>
   );

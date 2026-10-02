@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { Avatar } from '../components/Avatar';
+import { CheckoutSheet } from '../components/CheckoutSheet';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
 import { getCreator, productsByCreator, type Tier } from '../data';
 import { hapticSelect, hapticSuccess } from '../haptics';
+import type { ChargeOk } from '../payment';
 import { useStore } from '../store';
 import { homeStyles as styles } from './homeStyles';
 
@@ -20,6 +22,7 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
   const { isFollowing, toggleFollow, showToast, subscribe, unsubscribe, memberPrice } = useStore();
   const products = productsByCreator(creatorId);
   const [sheet, setSheet] = useState(false);
+  const [checkout, setCheckout] = useState(false);
   const [paying, setPaying] = useState(false);
   const [picked, setPicked] = useState<Tier | null>(null);
 
@@ -38,17 +41,23 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
   const price = memberPrice(creator.id);
   const member = price != null;
 
-  const pay = () => {
+  const goCheckout = () => {
+    const tier = picked ?? creator.tiers[1] ?? creator.tiers[0];
+    if (!tier) return;
+    setPicked(tier);
+    setSheet(false);
+    setCheckout(true);
+  };
+
+  const pay = (charge: ChargeOk) => {
     const tier = picked ?? creator.tiers[1] ?? creator.tiers[0];
     if (!tier || paying) return;
     setPaying(true);
-    setTimeout(() => {
-      subscribe(creator.id, tier.price);
-      hapticSuccess();
-      showToast(`Membre ${creator.name} · ${tier.price} €/mois`);
-      setPaying(false);
-      setSheet(false);
-    }, 900);
+    subscribe(creator.id, tier.price, charge);
+    hapticSuccess();
+    showToast(`Membre ${creator.name} · ${tier.price} €/mois`);
+    setPaying(false);
+    setCheckout(false);
   };
 
   const openSubscribe = () => {
@@ -148,14 +157,10 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
                 </PressableScale>
               );
             })}
-            <PressableScale contentStyle={styles.primaryBtn} onPress={pay} disabled={paying}>
-              {paying ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.primaryBtnText}>
-                  Payer {picked?.price ?? creator.tiers[1]?.price ?? 8} €/mois
-                </Text>
-              )}
+            <PressableScale contentStyle={styles.primaryBtn} onPress={goCheckout}>
+              <Text style={styles.primaryBtnText}>
+                Continuer · {picked?.price ?? creator.tiers[1]?.price ?? 8} €/mois
+              </Text>
             </PressableScale>
             <PressableScale
               contentStyle={styles.ghostBtn}
@@ -167,6 +172,19 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
           </View>
         </View>
       </Modal>
+      <CheckoutSheet
+        visible={checkout}
+        title="Payer l’abonnement"
+        subtitle={`${creator.name} · ${picked?.name ?? 'Palier'} · ${picked?.price ?? 8} €/mois. Carte sandbox.`}
+        amountLabel={`Payer ${picked?.price ?? 8} €`}
+        busy={paying}
+        onClose={() => {
+          if (paying) return;
+          setCheckout(false);
+          setSheet(true);
+        }}
+        onPaid={pay}
+      />
     </>
   );
 }

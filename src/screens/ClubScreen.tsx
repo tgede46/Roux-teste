@@ -4,6 +4,7 @@ import { ScrollView, Text, TextInput, View } from 'react-native';
 import { EmptyState } from '../components/EmptyState';
 import { Avatar } from '../components/Avatar';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { ME_CREATOR_ID, canReadPost, getCreator } from '../data';
 import { hapticError, hapticLight, hapticSelect } from '../haptics';
@@ -105,7 +106,8 @@ export function ClubScreen({ onOpenCreator }: Props) {
             onAction={() => setOnlyMembers(false)}
           />
         ) : (
-          visible.map((post) => {
+          <Group inset={16}>
+            {visible.map((post) => {
             const creator =
               post.creatorId === ME_CREATOR_ID
                 ? {
@@ -177,7 +179,8 @@ export function ClubScreen({ onOpenCreator }: Props) {
                 </View>
               </View>
             );
-          })
+          })}
+          </Group>
         )}
       </FadeSlideIn>
     </ScrollView>

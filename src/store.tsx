@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { hashSecret, secretsMatch } from './auth';
 import {
   CLUB_POSTS,
   DROPS,
@@ -17,25 +18,51 @@ import {
   isIncludedInTier,
   type ClubPost,
 } from './data';
+import type { ChargeOk } from './payment';
 
-const STORAGE_KEY = 'roux-store-v2';
+const STORAGE_KEY = 'roux-store-v3';
 
 export type User = {
   name: string;
   email: string;
 };
 
+export type Account = {
+  email: string;
+  name: string;
+  passwordHash: string;
+};
+
 export type Order = {
   id: string;
-  productId: string;
+  kind: 'product' | 'membership';
+  productId?: string;
+  creatorId?: string;
   price: number;
   at: number;
+  last4: string;
+  brand: string;
 };
 
 export type AccessKind = 'purchase' | 'member' | null;
 
+export type AuthResult = { ok: true } | { ok: false; error: string };
+
 type Toast = {
   message: string;
+};
+
+type ProfileSlice = {
+  favorites: string[];
+  owned: string[];
+  following: string[];
+  memberships: Record<string, number>;
+  orders: Order[];
+  likedPosts: string[];
+  extraPosts: ClubPost[];
+  opened: string[];
+  readDropIds: string[];
+  notifs: boolean;
 };
 
 type Store = {
@@ -50,12 +77,14 @@ type Store = {
   posts: ClubPost[];
   notifs: boolean;
   toast: Toast | null;
-  login: (user: User) => void;
+  signIn: (email: string, password: string) => Promise<AuthResult>;
+  signUp: (name: string, email: string, password: string) => Promise<AuthResult>;
+  resetPassword: (email: string, password: string) => Promise<AuthResult>;
   logout: () => void;
   updateName: (name: string) => void;
   toggleFavorite: (id: string) => void;
-  buy: (id: string) => boolean;
-  subscribe: (creatorId: string, price: number) => void;
+  buy: (id: string, charge: ChargeOk) => boolean;
+  subscribe: (creatorId: string, price: number, charge: ChargeOk) => void;
   unsubscribe: (creatorId: string) => void;
   toggleFollow: (id: string) => void;
   togglePostLike: (id: string) => void;
@@ -81,17 +110,9 @@ type Store = {
 };
 
 type Persisted = {
-  user: User | null;
-  favorites: string[];
-  owned: string[];
-  following: string[];
-  memberships: Record<string, number>;
-  orders: Order[];
-  likedPosts: string[];
-  extraPosts: ClubPost[];
-  opened: string[];
-  readDropIds: string[];
-  notifs: boolean;
+  accounts: Account[];
+  profiles: Record<string, ProfileSlice>;
+  sessionEmail: string | null;
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -100,11 +121,14 @@ function toggleId(list: string[], id: string) {
   return list.includes(id) ? list.filter((item) => item !== id) : [...list, id];
 }
 
-const defaults: Persisted = {
-  user: null,
-  favorites: ['affiche-jungle'],
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+const emptyProfile: ProfileSlice = {
+  favorites: [],
   owned: [],
-  following: ['mina', 'roux', 'leo'],
+  following: [],
   memberships: {},
   orders: [],
   likedPosts: [],
@@ -116,10 +140,12 @@ const defaults: Persisted = {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, ProfileSlice>>({});
   const [user, setUser] = useState<User | null>(null);
-  const [favorites, setFavorites] = useState<string[]>(defaults.favorites);
+  const [favorites, setFavorites] = useState<string[]>(emptyProfile.favorites);
   const [owned, setOwned] = useState<string[]>([]);
-  const [following, setFollowing] = useState<string[]>(defaults.following);
+  const [following, setFollowing] = useState<string[]>([]);
   const [memberships, setMemberships] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<Order[]>([]);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
@@ -129,23 +155,37 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [notifs, setNotifsState] = useState(true);
   const [toast, setToast] = useState<Toast | null>(null);
 
+  const applyProfile = useCallback((slice: ProfileSlice | undefined) => {
+    const next = slice ?? emptyProfile;
+    setFavorites(next.favorites);
+    setOwned(next.owned);
+    setFollowing(next.following);
+    setMemberships(next.memberships);
+    setOrders(next.orders);
+    setLikedPosts(next.likedPosts);
+    setExtraPosts(next.extraPosts);
+    setOpened(next.opened);
+    setReadDropIds(next.readDropIds);
+    setNotifsState(next.notifs);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(STORAGE_KEY)
       .then((raw) => {
         if (cancelled || !raw) return;
         const parsed = JSON.parse(raw) as Partial<Persisted>;
-        if (parsed.user) setUser(parsed.user);
-        if (parsed.favorites) setFavorites(parsed.favorites);
-        if (parsed.owned) setOwned(parsed.owned);
-        if (parsed.following) setFollowing(parsed.following);
-        if (parsed.memberships) setMemberships(parsed.memberships);
-        if (parsed.orders) setOrders(parsed.orders);
-        if (parsed.likedPosts) setLikedPosts(parsed.likedPosts);
-        if (parsed.extraPosts) setExtraPosts(parsed.extraPosts);
-        if (parsed.opened) setOpened(parsed.opened);
-        if (parsed.readDropIds) setReadDropIds(parsed.readDropIds);
-        if (typeof parsed.notifs === 'boolean') setNotifsState(parsed.notifs);
+        const nextAccounts = parsed.accounts ?? [];
+        const nextProfiles = parsed.profiles ?? {};
+        if (cancelled) return;
+        setAccounts(nextAccounts);
+        setProfiles(nextProfiles);
+        const session = parsed.sessionEmail;
+        const account = nextAccounts.find((item) => item.email === session);
+        if (account) {
+          applyProfile(nextProfiles[account.email]);
+          setUser({ name: account.name, email: account.email });
+        }
       })
       .catch(() => undefined)
       .finally(() => {
@@ -154,55 +194,178 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyProfile]);
 
   useEffect(() => {
     if (!ready) return;
+    const nextProfiles = { ...profiles };
+    if (user) {
+      nextProfiles[user.email] = {
+        favorites,
+        owned,
+        following,
+        memberships,
+        orders,
+        likedPosts,
+        extraPosts,
+        opened,
+        readDropIds,
+        notifs,
+      };
+    }
     const payload: Persisted = {
-      user,
-      favorites,
-      owned,
-      following,
-      memberships,
-      orders,
-      likedPosts,
-      extraPosts,
-      opened,
-      readDropIds,
-      notifs,
+      accounts,
+      profiles: nextProfiles,
+      sessionEmail: user?.email ?? null,
     };
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload)).catch(() => undefined);
-  }, [ready, user, favorites, owned, following, memberships, orders, likedPosts, extraPosts, opened, readDropIds, notifs]);
+  }, [
+    ready,
+    accounts,
+    profiles,
+    user,
+    favorites,
+    owned,
+    following,
+    memberships,
+    orders,
+    likedPosts,
+    extraPosts,
+    opened,
+    readDropIds,
+    notifs,
+  ]);
 
   const showToast = useCallback((message: string) => {
     setToast({ message });
   }, []);
 
-  const login = useCallback((next: User) => {
-    setUser(next);
-    showToast(`Salut ${next.name.split(' ')[0]}`);
-  }, [showToast]);
+  const signIn = useCallback(
+    async (emailValue: string, password: string): Promise<AuthResult> => {
+      const email = normalizeEmail(emailValue);
+      const account = accounts.find((item) => item.email === email);
+      if (!account) return { ok: false, error: 'Aucun compte pour cet email.' };
+      const match = await secretsMatch(email, password, account.passwordHash);
+      if (!match) return { ok: false, error: 'Mot de passe incorrect.' };
+      applyProfile(profiles[email]);
+      setUser({ name: account.name, email });
+      showToast(`Salut ${account.name.split(' ')[0]}`);
+      return { ok: true };
+    },
+    [accounts, profiles, applyProfile, showToast],
+  );
+
+  const signUp = useCallback(
+    async (name: string, emailValue: string, password: string): Promise<AuthResult> => {
+      const email = normalizeEmail(emailValue);
+      if (accounts.some((item) => item.email === email)) {
+        return { ok: false, error: 'Un compte existe déjà. Connecte-toi.' };
+      }
+      const passwordHash = await hashSecret(email, password);
+      const account: Account = { email, name: name.trim(), passwordHash };
+      setAccounts((list) => [...list, account]);
+      setProfiles((current) => ({ ...current, [email]: emptyProfile }));
+      applyProfile(emptyProfile);
+      setUser({ name: account.name, email });
+      showToast(`Salut ${account.name.split(' ')[0]}`);
+      return { ok: true };
+    },
+    [accounts, applyProfile, showToast],
+  );
+
+  const resetPassword = useCallback(
+    async (emailValue: string, password: string): Promise<AuthResult> => {
+      const email = normalizeEmail(emailValue);
+      const account = accounts.find((item) => item.email === email);
+      if (!account) return { ok: false, error: 'Aucun compte pour cet email.' };
+      const passwordHash = await hashSecret(email, password);
+      setAccounts((list) =>
+        list.map((item) => (item.email === email ? { ...item, passwordHash } : item)),
+      );
+      return { ok: true };
+    },
+    [accounts],
+  );
 
   const logout = useCallback(() => {
+    if (user) {
+      setProfiles((current) => ({
+        ...current,
+        [user.email]: {
+          favorites,
+          owned,
+          following,
+          memberships,
+          orders,
+          likedPosts,
+          extraPosts,
+          opened,
+          readDropIds,
+          notifs,
+        },
+      }));
+    }
     setUser(null);
-  }, []);
+    applyProfile(emptyProfile);
+  }, [
+    user,
+    favorites,
+    owned,
+    following,
+    memberships,
+    orders,
+    likedPosts,
+    extraPosts,
+    opened,
+    readDropIds,
+    notifs,
+    applyProfile,
+  ]);
 
-  const buy = useCallback((id: string) => {
+  const buy = useCallback((id: string, charge: ChargeOk) => {
     const product = getProduct(id);
     if (!product) return false;
-    setOwned((list) => (list.includes(id) ? list : [...list, id]));
-    setOrders((list) =>
-      list.some((order) => order.productId === id)
-        ? list
-        : [{ id: `o-${Date.now()}`, productId: id, price: product.price, at: Date.now() }, ...list],
-    );
-    return true;
+    let added = false;
+    setOwned((list) => {
+      if (list.includes(id)) return list;
+      added = true;
+      return [...list, id];
+    });
+    setOrders((list) => {
+      if (list.some((order) => order.kind === 'product' && order.productId === id)) return list;
+      return [
+        {
+          id: `o-${Date.now()}`,
+          kind: 'product',
+          productId: id,
+          creatorId: product.creatorId,
+          price: product.price,
+          at: Date.now(),
+          last4: charge.last4,
+          brand: charge.brand,
+        },
+        ...list,
+      ];
+    });
+    return added || true;
   }, []);
 
   const subscribe = useCallback(
-    (creatorId: string, price: number) => {
+    (creatorId: string, price: number, charge: ChargeOk) => {
       setMemberships((current) => ({ ...current, [creatorId]: price }));
       setFollowing((list) => (list.includes(creatorId) ? list : [...list, creatorId]));
+      setOrders((list) => [
+        {
+          id: `m-${Date.now()}`,
+          kind: 'membership',
+          creatorId,
+          price,
+          at: Date.now(),
+          last4: charge.last4,
+          brand: charge.brand,
+        },
+        ...list,
+      ]);
       if (notifs) {
         const name = getCreator(creatorId)?.name ?? 'Atelier';
         showToast(`${name} droppe dans Pour toi`);
@@ -296,9 +459,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       posts: [...extraPosts, ...CLUB_POSTS],
       notifs,
       toast,
-      login,
+      signIn,
+      signUp,
+      resetPassword,
       logout,
-      updateName: (name) => setUser((current) => (current ? { ...current, name } : current)),
+      updateName: (name) => {
+        setUser((current) => (current ? { ...current, name } : current));
+        setAccounts((list) =>
+          list.map((item) => (item.email === user?.email ? { ...item, name } : item)),
+        );
+      },
       toggleFavorite: (id) => setFavorites((list) => toggleId(list, id)),
       buy,
       subscribe,
@@ -339,7 +509,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       readDropIds,
       notifs,
       toast,
-      login,
+      signIn,
+      signUp,
+      resetPassword,
       logout,
       buy,
       subscribe,

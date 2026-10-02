@@ -383,7 +383,7 @@ export const CLUB_POSTS: ClubPost[] = [
   {
     id: 'p2',
     creatorId: 'roux',
-    text: 'On drop un pack typo EB Garamond ce soir à 19h. Lien dans la boutique dès l’heure pile.',
+    text: 'On drop un pack typo Noto Sans ce soir à 19h. Lien dans la boutique dès l’heure pile.',
     time: 'il y a 5 h',
     minPrice: 0,
   },
