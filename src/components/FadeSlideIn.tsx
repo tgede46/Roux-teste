@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Animated, Easing } from 'react-native';
 
 type Props = {
@@ -9,9 +9,9 @@ type Props = {
 };
 
 export function FadeSlideIn({ delay = 0, fromY = 18, fromX = 0, children }: Props) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(fromY)).current;
-  const translateX = useRef(new Animated.Value(fromX)).current;
+  const opacity = useState(() => new Animated.Value(0))[0];
+  const translateY = useState(() => new Animated.Value(fromY))[0];
+  const translateX = useState(() => new Animated.Value(fromX))[0];
 
   useEffect(() => {
     Animated.parallel([

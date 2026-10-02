@@ -46,7 +46,7 @@ export const homeStyles = StyleSheet.create({
     color: colors.text,
   },
   title: {
-    marginTop: 2,
+    marginTop: 6,
     marginBottom: 12,
     fontFamily: fonts.bold,
     fontSize: 34,
@@ -111,7 +111,7 @@ export const homeStyles = StyleSheet.create({
   },
   chevronSmall: {
     fontSize: 22,
-    color: '#C7C7CC',
+    color: colors.muted,
     marginTop: -1,
   },
   categories: {
@@ -243,16 +243,15 @@ export const homeStyles = StyleSheet.create({
     maxWidth: '100%',
   },
   tabLabel: {
-    fontFamily: uiFont,
+    fontFamily: fonts.medium,
     fontSize: 11,
-    fontWeight: '500',
     letterSpacing: 0.06,
     color: colors.tabInactive,
     textAlign: 'center',
   },
   tabLabelActive: {
+    fontFamily: fonts.semibold,
     color: colors.text,
-    fontWeight: '600',
   },
   placeholder: {
     flex: 1,
@@ -291,9 +290,8 @@ export const homeStyles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   badgeText: {
-    fontFamily: uiFont,
+    fontFamily: fonts.bold,
     fontSize: 11,
-    fontWeight: '700',
     color: colors.white,
   },
   detailArt: {
@@ -370,7 +368,7 @@ export const homeStyles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: colors.starship,
+    backgroundColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -462,7 +460,8 @@ export const homeStyles = StyleSheet.create({
   },
   chip: {
     paddingHorizontal: 14,
-    height: 32,
+    paddingVertical: 8,
+    minHeight: 36,
     borderRadius: 16,
     backgroundColor: colors.fill,
     alignItems: 'center',
@@ -549,13 +548,13 @@ export const homeStyles = StyleSheet.create({
   fieldError: {
     fontFamily: fonts.regular,
     fontSize: 13,
-    color: '#C0392B',
+    color: colors.destructive,
     marginTop: 6,
     marginBottom: 8,
   },
   composerError: {
     borderWidth: 1.5,
-    borderColor: '#C0392B',
+    borderColor: colors.destructive,
   },
   heartBtn: {
     width: 44,
@@ -570,7 +569,7 @@ export const homeStyles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: colors.starship,
+    backgroundColor: colors.text,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
@@ -585,13 +584,13 @@ export const homeStyles = StyleSheet.create({
     paddingVertical: 12,
   },
   dropRowUnread: {
-    backgroundColor: '#FFF8F5',
+    backgroundColor: colors.fill,
   },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.starship,
+    backgroundColor: colors.text,
   },
   payInput: {
     backgroundColor: colors.white,
@@ -615,13 +614,13 @@ export const homeStyles = StyleSheet.create({
   memberHint: {
     fontFamily: fonts.semibold,
     fontSize: 15,
-    color: colors.jungle,
+    color: colors.text,
     marginBottom: 14,
   },
   includeBadge: {
     fontFamily: uiFont,
     fontSize: 13,
-    color: colors.jungle,
+    color: colors.text,
     marginTop: 4,
   },
   tierRow: {
@@ -670,7 +669,7 @@ export const homeStyles = StyleSheet.create({
     width: '100%',
     height: 220,
     borderRadius: 20,
-    backgroundColor: '#111111',
+    backgroundColor: colors.surfaceHigh,
     overflow: 'hidden',
   },
   docPage: {

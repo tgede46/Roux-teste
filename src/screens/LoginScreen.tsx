@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -16,6 +16,8 @@ import { hapticError } from '../haptics';
 import { useStore } from '../store';
 import { validateEmail, validateName, validatePassword } from '../validation';
 import { loginStyles as styles } from './loginStyles';
+import { colors } from '../theme';
+
 
 function shakeField(anim: Animated.Value) {
   anim.setValue(0);
@@ -51,16 +53,18 @@ export function LoginScreen({
   const { signIn, signUp, resetPassword } = useStore();
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
-  const emailShake = useRef(new Animated.Value(0)).current;
-  const nameShake = useRef(new Animated.Value(0)).current;
-  const passwordShake = useRef(new Animated.Value(0)).current;
-  const buttonScale = useRef(new Animated.Value(1)).current;
-  const buttonPulse = useRef(new Animated.Value(0)).current;
+  const emailShake = useState(() => new Animated.Value(0))[0];
+  const nameShake = useState(() => new Animated.Value(0))[0];
+  const passwordShake = useState(() => new Animated.Value(0))[0];
+  const buttonScale = useState(() => new Animated.Value(1))[0];
+  const buttonPulse = useState(() => new Animated.Value(0))[0];
 
-  useEffect(() => {
+  const [prevMode, setPrevMode] = useState(mode);
+  if (prevMode !== mode) {
+    setPrevMode(mode);
     setLoading(false);
     setErrors({});
-  }, [mode]);
+  }
 
   const onContinue = () => {
     if (loading) return;
@@ -143,9 +147,13 @@ export function LoginScreen({
         <View style={styles.screen}>
           <FadeSlideIn delay={40} fromX={-16} fromY={0}>
             <Pressable
-              style={styles.backRow}
+              style={[styles.backRow, mode === 'login' && { opacity: 0 }]}
               hitSlop={8}
+              disabled={mode === 'login'}
               onPress={mode === 'login' ? undefined : onBackToLogin}
+              accessibilityRole="button"
+              accessibilityLabel="Retour"
+              accessibilityElementsHidden={mode === 'login'}
             >
               <Text style={styles.backChevron}>‹</Text>
               <Text style={styles.backLabel}>Roux</Text>
@@ -214,6 +222,8 @@ export function LoginScreen({
                 onPress={onForgot}
                 onPressIn={() => setPressedLink('forgot')}
                 onPressOut={() => setPressedLink(null)}
+                accessibilityRole="link"
+                accessibilityLabel="Réinitialiser le mot de passe"
               >
                 <Text style={[styles.forgot, pressedLink === 'forgot' && styles.linkPressed]}>
                   Mot de passe oublié
@@ -252,7 +262,7 @@ export function LoginScreen({
               >
                 <Animated.View style={[styles.button, { transform: [{ scale: buttonScale }] }]}>
                   {loading ? (
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={colors.white} />
                   ) : (
                     <Text style={styles.buttonText}>
                       {mode === 'signup'
@@ -290,8 +300,18 @@ export function LoginScreen({
         </View>
       </KeyboardAvoidingView>
       {loading ? (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#111111" />
+        <View
+          style={styles.overlay}
+          accessibilityLiveRegion="assertive"
+          accessibilityLabel={
+            mode === 'forgot'
+              ? 'Mise à jour du mot de passe en cours'
+              : mode === 'signup'
+                ? 'Création du compte en cours'
+                : 'Connexion en cours'
+          }
+        >
+          <ActivityIndicator size="large" color={colors.text} />
           <Text style={styles.overlayText}>
             {mode === 'forgot'
               ? 'Mise à jour du mot de passe...'

@@ -2,7 +2,7 @@ import 'react-native-gesture-handler';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { StatusBar as RNStatusBar, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NotoSans_400Regular,
@@ -78,6 +78,7 @@ export default function RootLayout() {
   return (
     <StoreProvider>
       <SafeAreaProvider>
+        <RNStatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
         <StatusBar style="dark" />
         <SplashGate />
         <RootNavigator />

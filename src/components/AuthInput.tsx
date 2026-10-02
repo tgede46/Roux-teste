@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useRef, useState, type ComponentProps } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { Animated, Pressable, Text, TextInput, View } from 'react-native';
 import { loginStyles as styles } from '../screens/loginStyles';
 import { colors } from '../theme';
@@ -23,7 +23,7 @@ export function AuthInput({
 }: Props) {
   const [focused, setFocused] = useState(false);
   const [passwordHidden, setPasswordHidden] = useState(true);
-  const focusAnim = useRef(new Animated.Value(0)).current;
+  const focusAnim = useState(() => new Animated.Value(0))[0];
 
   useEffect(() => {
     Animated.spring(focusAnim, {

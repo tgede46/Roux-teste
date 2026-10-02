@@ -22,6 +22,11 @@
       },
       "predictiveBackGestureEnabled": false
     },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
@@ -42,7 +47,8 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-router"
+      "expo-router",
+      "expo-asset"
     ]
   }
 }

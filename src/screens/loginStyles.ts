@@ -61,13 +61,13 @@ export const loginStyles = StyleSheet.create({
   },
   inputWrapError: {
     borderWidth: 1.5,
-    borderColor: '#FF3B30',
+    borderColor: colors.destructive,
     backgroundColor: colors.white,
   },
   fieldError: {
     fontFamily: uiFont,
     fontSize: 13,
-    color: '#C0392B',
+    color: colors.destructive,
     marginTop: 6,
   },
   inputRow: {

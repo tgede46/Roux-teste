@@ -11,33 +11,36 @@ export const uiFont = fonts.regular;
 export const colors = {
   text: '#000000',
   white: '#FFFFFF',
-  tint: '#E85C2A',
-  teal: '#007AFF',
-  placeholder: '#636366',
-  muted: '#636366',
-  background: '#F2F2F7',
-  fill: '#E5E5EA',
-  separator: 'rgba(60, 60, 67, 0.29)',
-  cream: '#FFF6EA',
-  jungle: '#34C759',
-  starship: '#E85C2A',
-  coral: '#F3C84A',
-  lavender: '#C9A4E6',
-  heart: '#FF3B30',
-  systemGreen: '#34C759',
-  destructive: '#FF3B30',
-  tabInactive: '#636366',
-  tabBarFill: 'rgba(255, 255, 255, 0.62)',
-  tabBarOpaque: '#F9F9F9',
-  tabBarBorder: 'rgba(255, 255, 255, 0.55)',
+  tint: '#000000',
+  teal: '#000000',
+  placeholder: '#8E8E93',
+  muted: '#71717A',
+  secondary: '#A1A1AA',       // textes tertiaires
+  background: '#FFFFFF',
+  fill: '#F4F4F5',
+  separator: 'rgba(0, 0, 0, 0.08)',
+  cream: '#F4F4F5',
+  jungle: '#000000',
+  starship: '#000000',
+  coral: '#000000',
+  lavender: '#000000',
+  heart: '#000000',
+  systemGreen: '#000000',
+  surfaceHigh: '#111111',     // fond sombre (lecteur, vidéo)
+  surfaceInverse: '#27272A', // surface sombre inversée
+  destructive: '#D70015',    // rouge système iOS, distinct de text (#000)
+  tabInactive: '#8E8E93',
+  tabBarFill: 'rgba(255, 255, 255, 0.85)',
+  tabBarOpaque: '#FFFFFF',
+  tabBarBorder: 'rgba(0, 0, 0, 0.08)',
 };
 
 export const radius = {
-  group: 10,
-  card: 12,
-  button: 14,
-  search: 10,
-  pill: 22,
+  group: 16,
+  card: 16,
+  button: 16,
+  search: 16,
+  pill: 32,
 };
 
 export const TAB_BAR_RESERVE = 108;

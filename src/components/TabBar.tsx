@@ -6,7 +6,8 @@ import { AccessibilityInfo, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { hapticSelect } from '../haptics';
 import { homeStyles as styles } from '../screens/homeStyles';
-import { colors, uiFont } from '../theme';
+import { colors, fonts, uiFont } from '../theme';
+
 import { PressableScale } from './PressableScale';
 
 export type AppTab = 'home' | 'library' | 'club' | 'profile';
@@ -15,11 +16,12 @@ const TABS: {
   id: AppTab;
   href: '/' | '/library' | '/club' | '/profile';
   label: string;
+  fullLabel?: string;
   filled: keyof typeof Ionicons.glyphMap;
   outline: keyof typeof Ionicons.glyphMap;
 }[] = [
   { id: 'home', href: '/', label: 'Accueil', filled: 'home', outline: 'home-outline' },
-  { id: 'library', href: '/library', label: 'Bibliothèque', filled: 'albums', outline: 'albums-outline' },
+  { id: 'library', href: '/library', label: 'Biblio', fullLabel: 'Bibliothèque', filled: 'albums', outline: 'albums-outline' },
   { id: 'club', href: '/club', label: 'Club', filled: 'people', outline: 'people-outline' },
   { id: 'profile', href: '/profile', label: 'Profil', filled: 'person', outline: 'person-outline' },
 ];
@@ -73,7 +75,7 @@ export function TabBar() {
                 contentStyle={styles.tabItemInner}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
-                accessibilityLabel={tab.label}
+                accessibilityLabel={tab.fullLabel ?? tab.label}
                 onPress={() => {
                   hapticSelect();
                   router.navigate(tab.href);
@@ -91,7 +93,7 @@ export function TabBar() {
                   style={[
                     styles.tabLabel,
                     { fontFamily: uiFont },
-                    isActive && { color: colors.tint },
+                    isActive && { color: colors.tint, fontFamily: fonts.semibold },
                   ]}
                 >
                   {tab.label}

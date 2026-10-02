@@ -65,7 +65,12 @@ export function StudioScreen() {
       contentContainerStyle={styles.content}
       keyboardShouldPersistTaps="handled"
     >
-      <PressableScale style={styles.headerLeft} onPress={goBack}>
+      <PressableScale
+        style={styles.headerLeft}
+        onPress={goBack}
+        accessibilityRole="button"
+        accessibilityLabel="Fermer l'atelier"
+      >
         <Text style={styles.chevron}>‹</Text>
         <Text style={styles.brand}>Fermer</Text>
       </PressableScale>
