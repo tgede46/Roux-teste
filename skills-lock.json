@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/animate-expo/SKILL.md",
       "computedHash": "5de09593d564091f9db60aabede7bed760251e118548272050a247c653c417d2"
+    },
+    "apple-design": {
+      "source": "dickwu/apple-design-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "546d29fc8b607454f3656426b3470030d48a87927746d4609c2901a6e9f38e2f"
     }
   }
 }

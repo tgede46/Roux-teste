@@ -6,7 +6,17 @@ import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
-import { CATEGORIES, CREATORS, PRODUCTS, firstName, type CategoryId } from '../data';
+import {
+  CATEGORIES,
+  CREATORS,
+  PRODUCTS,
+  dropKindLabel,
+  dropsForMembers,
+  firstName,
+  getCreator,
+  productsForMembers,
+  type CategoryId,
+} from '../data';
 import { hapticSelect } from '../haptics';
 import { useStore } from '../store';
 import { colors } from '../theme';
@@ -16,15 +26,20 @@ type Props = {
   onOpenProduct: (id: string) => void;
   onOpenCreator: (id: string) => void;
   onOpenFavorites: () => void;
+  onOpenNotifs: () => void;
 };
 
-export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Props) {
-  const { following, favorites, user } = useStore();
+export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOpenNotifs }: Props) {
+  const { following, favorites, user, memberships, unreadDropCount, readDropIds, markDropRead, notifs } =
+    useStore();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CategoryId | null>(null);
 
   const followed = CREATORS.filter((creator) => following.includes(creator.id));
   const needle = query.trim().toLowerCase();
+  const browsing = needle.length > 0 || category != null;
+  const memberDrops = dropsForMembers(memberships);
+  const memberProducts = productsForMembers(memberships);
 
   const products = useMemo(() => {
     return PRODUCTS.filter((product) => {
@@ -49,34 +64,52 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Pr
   return (
     <ScrollView
       style={styles.body}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={styles.tabSceneContent}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       <FadeSlideIn delay={40} fromX={-12} fromY={0}>
         <View style={styles.header}>
-          <Text style={styles.brand}>Roux</Text>
-          <PressableScale
-            style={styles.heartWrap}
-            onPress={() => {
-              hapticSelect();
-              onOpenFavorites();
-            }}
-            accessibilityLabel="Ouvrir les favoris"
-          >
-            <Ionicons name="heart" size={22} color={colors.heart} />
-            {favorites.length > 0 ? (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{favorites.length}</Text>
-              </View>
-            ) : null}
-          </PressableScale>
+          <Text style={styles.greeting}>Salut {firstName(user?.name ?? 'toi')}</Text>
+          <View style={styles.headerRight}>
+            <PressableScale
+              style={styles.heartBtn}
+              onPress={() => {
+                hapticSelect();
+                onOpenNotifs();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir les drops"
+            >
+              <Ionicons name="notifications" size={22} color={colors.text} />
+              {unreadDropCount > 0 ? (
+                <View style={styles.headerBadge}>
+                  <Text style={styles.badgeText}>{unreadDropCount}</Text>
+                </View>
+              ) : null}
+            </PressableScale>
+            <PressableScale
+              style={styles.heartBtn}
+              onPress={() => {
+                hapticSelect();
+                onOpenFavorites();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Ouvrir les favoris"
+            >
+              <Ionicons name="heart" size={22} color={colors.heart} />
+              {favorites.length > 0 ? (
+                <View style={styles.headerBadge}>
+                  <Text style={styles.badgeText}>{favorites.length}</Text>
+                </View>
+              ) : null}
+            </PressableScale>
+          </View>
         </View>
       </FadeSlideIn>
 
       <FadeSlideIn delay={90}>
-        <Text style={styles.greeting}>Salut {firstName(user?.name ?? 'toi')}</Text>
-        <Text style={styles.title}>Accueil</Text>
+        <Text style={styles.title}>Pour toi</Text>
       </FadeSlideIn>
 
       <FadeSlideIn delay={140}>
@@ -89,6 +122,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Pr
             placeholderTextColor={colors.placeholder}
             style={styles.searchInput}
             returnKeyType="search"
+            accessibilityLabel="Rechercher"
           />
           {query.length > 0 ? (
             <PressableScale onPress={() => setQuery('')} hitSlop={8} accessibilityLabel="Effacer">
@@ -98,8 +132,60 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Pr
         </View>
       </FadeSlideIn>
 
+      {!browsing ? (
+        <FadeSlideIn delay={160}>
+          <Text style={styles.sectionTitle}>Tes ateliers</Text>
+          {memberDrops.length === 0 ? (
+            <EmptyState
+              title="Rien à toi encore"
+              body="Abonne-toi à un atelier : drops, lives et fichiers membres arrivent ici, avant le catalogue."
+            />
+          ) : (
+            memberDrops.map((drop) => {
+              const creator = getCreator(drop.creatorId);
+              if (!creator) return null;
+              const unread = notifs && !readDropIds.includes(drop.id);
+              return (
+                <PressableScale
+                  key={drop.id}
+                  contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
+                  onPress={() => {
+                    markDropRead(drop.id);
+                    if (drop.productId) onOpenProduct(drop.productId);
+                    else onOpenCreator(drop.creatorId);
+                  }}
+                >
+                  <Avatar photo={creator.photo} color={creator.color} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.followName}>{drop.title}</Text>
+                    <Text style={styles.followMeta}>
+                      {dropKindLabel(drop.kind)} · {creator.name} · {drop.time}
+                    </Text>
+                  </View>
+                  {unread ? <View style={styles.unreadDot} /> : null}
+                </PressableScale>
+              );
+            })
+          )}
+          {memberProducts.length > 0 ? (
+            <>
+              <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Inclus dans tes abos</Text>
+              <View style={styles.productGrid}>
+                {memberProducts.slice(0, 4).map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onPress={() => onOpenProduct(product.id)}
+                  />
+                ))}
+              </View>
+            </>
+          ) : null}
+        </FadeSlideIn>
+      ) : null}
+
       <FadeSlideIn delay={180}>
-        <Text style={styles.sectionTitle}>Catégories</Text>
+        <Text style={styles.sectionTitle}>Découvrir</Text>
         <View style={styles.categories}>
           {CATEGORIES.map((item) => {
             const selected = category === item.id;

@@ -16,14 +16,20 @@ import { CreatorScreen } from './src/screens/CreatorScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { LibraryScreen } from './src/screens/LibraryScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { ProductScreen } from './src/screens/ProductScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { ReaderScreen } from './src/screens/ReaderScreen';
 import { homeStyles } from './src/screens/homeStyles';
 import { StoreProvider, useStore } from './src/store';
-import { colors } from './src/theme';
+import { colors, fonts } from './src/theme';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
-type Route = { name: 'product'; id: string } | { name: 'creator'; id: string };
+type Route =
+  | { name: 'product'; id: string }
+  | { name: 'creator'; id: string }
+  | { name: 'reader'; id: string }
+  | { name: 'notifs' };
 
 function Splash() {
   return (
@@ -35,7 +41,15 @@ function Splash() {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ fontSize: 36, fontWeight: '800', color: colors.text }}>Roux</Text>
+      <Text
+        style={{
+          fontFamily: fonts.bold,
+          fontSize: 36,
+          color: colors.text,
+        }}
+      >
+        Roux
+      </Text>
     </View>
   );
 }
@@ -61,6 +75,18 @@ function AppShell() {
       if (last?.name === 'creator' && last.id === id) return routes;
       return [...routes, { name: 'creator', id }];
     });
+  const openFile = (id: string) =>
+    setStack((routes) => {
+      const last = routes[routes.length - 1];
+      if (last?.name === 'reader' && last.id === id) return routes;
+      return [...routes, { name: 'reader', id }];
+    });
+  const openNotifs = () =>
+    setStack((routes) => {
+      const last = routes[routes.length - 1];
+      if (last?.name === 'notifs') return routes;
+      return [...routes, { name: 'notifs' }];
+    });
   const openLibrary = () => {
     setTab('library');
     goMain();
@@ -74,7 +100,7 @@ function AppShell() {
     <View style={{ flex: 1 }}>
       <StatusBar style="dark" />
       {user ? (
-        <SafeAreaView style={homeStyles.safeArea}>
+        <SafeAreaView style={homeStyles.safeArea} edges={current ? ['top', 'bottom'] : ['top']}>
           <View style={homeStyles.body}>
             {current?.name === 'product' ? (
               <ProductScreen
@@ -82,7 +108,7 @@ function AppShell() {
                 onBack={pop}
                 onOpenCreator={openCreator}
                 onOpenProduct={openProduct}
-                onOpenLibrary={openLibrary}
+                onOpenFile={openFile}
               />
             ) : null}
             {current?.name === 'creator' ? (
@@ -92,16 +118,28 @@ function AppShell() {
                 onOpenProduct={openProduct}
               />
             ) : null}
+            {current?.name === 'reader' ? (
+              <ReaderScreen productId={current.id} onBack={pop} />
+            ) : null}
+            {current?.name === 'notifs' ? (
+              <NotificationsScreen
+                onBack={pop}
+                onOpenCreator={openCreator}
+                onOpenProduct={openProduct}
+              />
+            ) : null}
             {!current && tab === 'home' ? (
               <HomeScreen
                 onOpenProduct={openProduct}
                 onOpenCreator={openCreator}
                 onOpenFavorites={openLibrary}
+                onOpenNotifs={openNotifs}
               />
             ) : null}
             {!current && tab === 'library' ? (
               <LibraryScreen
                 onOpenProduct={openProduct}
+                onOpenFile={openFile}
                 onBrowse={() => {
                   setTab('home');
                   goMain();

@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, fonts } from '../theme';
+import { colors, fonts, TAB_BAR_RESERVE, uiFont } from '../theme';
 
 export const homeStyles = StyleSheet.create({
   safeArea: {
@@ -13,6 +13,11 @@ export const homeStyles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 6,
     paddingBottom: 24,
+  },
+  tabSceneContent: {
+    paddingHorizontal: 18,
+    paddingTop: 6,
+    paddingBottom: TAB_BAR_RESERVE,
   },
   header: {
     flexDirection: 'row',
@@ -59,8 +64,8 @@ export const homeStyles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontFamily: fonts.regular,
-    fontSize: 14,
+    fontFamily: uiFont,
+    fontSize: 17,
     color: colors.text,
     paddingVertical: 0,
   },
@@ -96,8 +101,8 @@ export const homeStyles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.32)',
   },
   categoryLabel: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
+    fontFamily: uiFont,
+    fontSize: 13,
     color: colors.text,
     marginTop: 6,
     textAlign: 'center',
@@ -126,8 +131,8 @@ export const homeStyles = StyleSheet.create({
     color: colors.text,
   },
   followMeta: {
-    fontFamily: fonts.regular,
-    fontSize: 12,
+    fontFamily: uiFont,
+    fontSize: 13,
     color: colors.muted,
     marginTop: 1,
   },
@@ -159,38 +164,56 @@ export const homeStyles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
   },
+  tabBarDock: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+  },
+  tabBarShell: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.tabBarBorder,
+  },
+  tabBarBlur: {
+    ...StyleSheet.absoluteFill,
+  },
+  tabBarFill: {
+    ...StyleSheet.absoluteFill,
+  },
   tabBar: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     justifyContent: 'space-around',
     paddingTop: 10,
-    paddingBottom: 8,
-    paddingHorizontal: 8,
-    backgroundColor: colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#D8DDD8',
+    paddingBottom: 10,
+    paddingHorizontal: 6,
   },
   tabItem: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 64,
-    gap: 4,
+    minHeight: 48,
   },
-  tabActiveIcon: {
-    width: 42,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: colors.text,
+  tabItemInner: {
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 3,
+    maxWidth: '100%',
   },
   tabLabel: {
-    fontFamily: fonts.regular,
-    fontSize: 11,
+    fontFamily: uiFont,
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: 0.1,
     color: colors.tabInactive,
+    textAlign: 'center',
   },
   tabLabelActive: {
     color: colors.text,
+    fontWeight: '600',
   },
   placeholder: {
     flex: 1,
@@ -229,8 +252,9 @@ export const homeStyles = StyleSheet.create({
     paddingHorizontal: 5,
   },
   badgeText: {
-    fontFamily: fonts.bold,
-    fontSize: 10,
+    fontFamily: uiFont,
+    fontSize: 11,
+    fontWeight: '700',
     color: colors.white,
   },
   detailArt: {
@@ -356,10 +380,9 @@ export const homeStyles = StyleSheet.create({
   },
   greeting: {
     fontFamily: fonts.regular,
-    fontSize: 16,
+    fontSize: 17,
     color: colors.muted,
     marginTop: 4,
-    marginBottom: -4,
   },
   emptyCard: {
     backgroundColor: colors.white,
@@ -489,22 +512,54 @@ export const homeStyles = StyleSheet.create({
     borderColor: '#C0392B',
   },
   heartBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  includeBadge: {
-    fontFamily: fonts.regular,
-    fontSize: 11,
-    color: colors.muted,
-    marginTop: 4,
+  headerBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.starship,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  dropRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+  },
+  dropRowUnread: {
+    borderWidth: 1.5,
+    borderColor: colors.text,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.starship,
   },
   memberHint: {
     fontFamily: fonts.semibold,
     fontSize: 15,
-    color: colors.teal,
+    color: colors.jungle,
     marginBottom: 14,
+  },
+  includeBadge: {
+    fontFamily: uiFont,
+    fontSize: 13,
+    color: colors.jungle,
+    marginTop: 4,
   },
   tierRow: {
     backgroundColor: colors.white,
@@ -523,5 +578,54 @@ export const homeStyles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 22,
     marginBottom: 10,
+  },
+  libraryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 10,
+    gap: 12,
+  },
+  libraryThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+  },
+  libraryMeta: {
+    flex: 1,
+  },
+  fileRow: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 8,
+  },
+  mediaStage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 20,
+    backgroundColor: '#111111',
+    overflow: 'hidden',
+  },
+  docPage: {
+    backgroundColor: colors.white,
+    borderRadius: 18,
+    padding: 12,
+    marginBottom: 12,
+  },
+  docPageLabel: {
+    fontFamily: uiFont,
+    fontSize: 13,
+    color: colors.muted,
+    marginBottom: 8,
+  },
+  docPageImage: {
+    width: '100%',
+    height: 280,
+    borderRadius: 12,
+    backgroundColor: colors.background,
   },
 });

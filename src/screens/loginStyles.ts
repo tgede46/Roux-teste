@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, fonts } from '../theme';
+import { colors, fonts, uiFont } from '../theme';
 
 export const loginStyles = StyleSheet.create({
   safeArea: {
@@ -27,7 +27,7 @@ export const loginStyles = StyleSheet.create({
     marginTop: -2,
   },
   backLabel: {
-    fontFamily: fonts.regular,
+    fontFamily: uiFont,
     fontSize: 17,
     color: colors.text,
   },
@@ -43,8 +43,8 @@ export const loginStyles = StyleSheet.create({
     marginBottom: 18,
   },
   label: {
-    fontFamily: fonts.regular,
-    fontSize: 15,
+    fontFamily: uiFont,
+    fontSize: 17,
     color: colors.text,
     marginBottom: 8,
   },
@@ -60,7 +60,7 @@ export const loginStyles = StyleSheet.create({
     borderColor: '#C0392B',
   },
   fieldError: {
-    fontFamily: fonts.regular,
+    fontFamily: uiFont,
     fontSize: 13,
     color: '#C0392B',
     marginTop: 6,
@@ -73,8 +73,8 @@ export const loginStyles = StyleSheet.create({
     flex: 1,
     height: 52,
     paddingHorizontal: 18,
-    fontFamily: fonts.regular,
-    fontSize: 16,
+    fontFamily: uiFont,
+    fontSize: 17,
     color: colors.text,
   },
   inputWithToggle: {
@@ -88,9 +88,9 @@ export const loginStyles = StyleSheet.create({
     paddingRight: 6,
   },
   forgot: {
-    fontFamily: fonts.regular,
+    fontFamily: uiFont,
     color: colors.teal,
-    fontSize: 15,
+    fontSize: 17,
     marginTop: 2,
     marginBottom: 28,
   },
@@ -122,8 +122,8 @@ export const loginStyles = StyleSheet.create({
     alignItems: 'center',
   },
   createAccountText: {
-    fontFamily: fonts.regular,
-    fontSize: 16,
+    fontFamily: uiFont,
+    fontSize: 17,
     color: colors.text,
   },
   overlay: {
@@ -135,8 +135,8 @@ export const loginStyles = StyleSheet.create({
   },
   overlayText: {
     marginTop: 14,
-    fontFamily: fonts.regular,
-    fontSize: 16,
+    fontFamily: uiFont,
+    fontSize: 17,
     color: colors.text,
   },
 });

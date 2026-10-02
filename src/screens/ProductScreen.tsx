@@ -4,7 +4,7 @@ import { Avatar } from '../components/Avatar';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
-import { getCreator, getProduct, relatedProducts } from '../data';
+import { fileKindLabel, getCreator, getProduct, getProductFile, relatedProducts } from '../data';
 import { hapticLight, hapticSuccess } from '../haptics';
 import { useStore } from '../store';
 import { colors } from '../theme';
@@ -16,7 +16,7 @@ type Props = {
   onBack: () => void;
   onOpenCreator: (id: string) => void;
   onOpenProduct: (id: string) => void;
-  onOpenLibrary: () => void;
+  onOpenFile: (id: string) => void;
 };
 
 export function ProductScreen({
@@ -24,10 +24,10 @@ export function ProductScreen({
   onBack,
   onOpenCreator,
   onOpenProduct,
-  onOpenLibrary,
+  onOpenFile,
 }: Props) {
   const product = getProduct(productId);
-  const { buy, isOwned, toggleFavorite, isFavorite, showToast, hasProductAccess } = useStore();
+  const { buy, isOwned, toggleFavorite, isFavorite, showToast, accessKind } = useStore();
   const [sheet, setSheet] = useState(false);
   const [paying, setPaying] = useState(false);
 
@@ -44,7 +44,9 @@ export function ProductScreen({
 
   const creator = getCreator(product.creatorId);
   const owned = isOwned(product.id);
-  const included = !owned && hasProductAccess(product.id);
+  const access = accessKind(product.id);
+  const included = access === 'member';
+  const file = getProductFile(product.id);
   const liked = isFavorite(product.id);
   const related = relatedProducts(product);
 
@@ -57,6 +59,7 @@ export function ProductScreen({
       showToast(`${product.name} est dans ta Library`);
       setPaying(false);
       setSheet(false);
+      onOpenFile(product.id);
     }, 900);
   };
 
@@ -84,8 +87,24 @@ export function ProductScreen({
           <Text style={styles.title}>{product.name}</Text>
           <Image source={product.image} style={styles.detailArt} resizeMode="cover" />
           <Text style={styles.detailPrice}>{product.price} €</Text>
+          {file ? (
+            <Text style={styles.followMeta}>
+              {fileKindLabel(file.kind)} · {file.fileName}
+            </Text>
+          ) : null}
           <Text style={styles.detailBlurb}>{product.blurb}</Text>
           <Text style={[styles.detailBlurb, { marginTop: -12 }]}>{product.details}</Text>
+          {file ? (
+            <>
+              <Text style={styles.sectionTitle}>Tu reçois</Text>
+              {file.items.map((item) => (
+                <Text key={item} style={styles.followMeta}>
+                  · {item}
+                </Text>
+              ))}
+              <Text style={[styles.detailBlurb, { marginTop: 12 }]}>{file.licence}</Text>
+            </>
+          ) : null}
           {creator ? (
             <PressableScale contentStyle={styles.followRow} onPress={() => onOpenCreator(creator.id)}>
               <Avatar photo={creator.photo} color={creator.color} />
@@ -99,16 +118,21 @@ export function ProductScreen({
             contentStyle={styles.primaryBtn}
             onPress={() => {
               if (owned || included) {
-                onOpenLibrary();
+                onOpenFile(product.id);
                 return;
               }
               setSheet(true);
             }}
           >
             <Text style={styles.primaryBtnText}>
-              {owned ? 'Voir dans Library' : included ? 'Inclus dans ton abo' : 'Acheter'}
+              {owned || included ? 'Ouvrir le fichier' : 'Acheter'}
             </Text>
           </PressableScale>
+          {owned ? (
+            <Text style={[styles.memberHint, { marginTop: 10 }]}>Déjà acheté — pas de rachat.</Text>
+          ) : included ? (
+            <Text style={[styles.memberHint, { marginTop: 10 }]}>Inclus dans ton abo — pas de rachat.</Text>
+          ) : null}
           {!owned && !included && product.includedAt != null && creator ? (
             <PressableScale
               contentStyle={[styles.ghostBtn, { marginTop: 10 }]}

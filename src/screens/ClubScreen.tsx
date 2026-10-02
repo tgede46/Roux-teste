@@ -47,7 +47,7 @@ export function ClubScreen({ onOpenCreator }: Props) {
   return (
     <ScrollView
       style={styles.body}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={styles.tabSceneContent}
       keyboardShouldPersistTaps="handled"
     >
       <FadeSlideIn>

@@ -4,11 +4,13 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-na
 
 type Props = Omit<PressableProps, 'children'> & {
   contentStyle?: StyleProp<ViewStyle>;
+  fillWidth?: boolean;
   children?: ReactNode;
 };
 
 export function PressableScale({
   contentStyle,
+  fillWidth = true,
   style,
   children,
   onPressIn,
@@ -33,7 +35,9 @@ export function PressableScale({
         onPressOut?.(event);
       }}
     >
-      <Animated.View style={[{ width: '100%' }, contentStyle, animated]}>{children}</Animated.View>
+      <Animated.View style={[fillWidth && { width: '100%' }, contentStyle, animated]}>
+        {children}
+      </Animated.View>
     </Pressable>
   );
 }

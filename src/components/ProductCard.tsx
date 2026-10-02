@@ -35,7 +35,7 @@ export function ProductCard({ product, onPress }: Props) {
           <Text
             style={[
               styles.includeBadge,
-              product.lightText && { color: colors.white, opacity: 0.9 },
+              product.lightText && { color: colors.white, opacity: 0.95 },
             ]}
           >
             Inclus dès {product.includedAt} €

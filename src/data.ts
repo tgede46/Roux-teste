@@ -35,6 +35,17 @@ export type Product = {
   includedAt?: number;
 };
 
+export type FileKind = 'image' | 'audio' | 'video' | 'pack' | 'print';
+
+export type ProductFile = {
+  kind: FileKind;
+  fileName: string;
+  licence: string;
+  items: string[];
+  pages?: ImageSourcePropType[];
+  mediaUri?: string;
+};
+
 export type ClubPost = {
   id: string;
   creatorId: string;
@@ -149,8 +160,7 @@ export const PRODUCTS: Product[] = [
     creatorId: 'roux',
     art: colors.coral,
     image: require('../assets/images/textures.jpg'),
-    infoBg: colors.jungle,
-    lightText: true,
+    infoBg: colors.cream,
     blurb: '24 grains, papiers et overlays pour tes visuels.',
     details: 'PNG 4K + .abr Photoshop. Licence personnelle et commerciale petite équipe.',
     includedAt: 12,
@@ -245,6 +255,115 @@ export const PRODUCTS: Product[] = [
     includedAt: 8,
   },
 ];
+
+const SAMPLE_VIDEO =
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+const SAMPLE_AUDIO =
+  'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3';
+
+export const PRODUCT_FILES: Record<string, ProductFile> = {
+  'affiche-jungle': {
+    kind: 'image',
+    fileName: 'Affiche-Jungle-A3.pdf',
+    licence: 'Personnelle + impression unique. Pas de revente du fichier.',
+    items: ['PDF print A3 300 dpi', 'PNG preview web'],
+    pages: [require('../assets/images/jungle.jpg')],
+  },
+  'sticker-tigre': {
+    kind: 'image',
+    fileName: 'Stickers-Tigre.png',
+    licence: 'Usage perso et stories. Pas de merch sans accord Mina.',
+    items: ['PNG HD planche', 'Fichiers découpe SVG'],
+    pages: [require('../assets/images/tigre.jpg')],
+  },
+  'pack-textures': {
+    kind: 'pack',
+    fileName: 'Roux-Textures.zip',
+    licence: 'Commerciale petite équipe (≤ 5 personnes).',
+    items: ['24 PNG 4K', '1 set .abr Photoshop', 'Readme licence'],
+    pages: [
+      require('../assets/images/textures.jpg'),
+      require('../assets/images/jungle.jpg'),
+      require('../assets/images/starship.jpg'),
+    ],
+  },
+  'typo-pixel': {
+    kind: 'pack',
+    fileName: 'Typo-Pixel-Roux.zip',
+    licence: 'Desktop + web jusqu’à 10k vues / mois.',
+    items: ['OTF Regular / Medium / Bold', 'WOFF2', 'Specimen PDF'],
+    pages: [require('../assets/images/typo.jpg')],
+  },
+  'badge-starship': {
+    kind: 'print',
+    fileName: 'Badge-Starship-bon.pdf',
+    licence: 'Objet physique. Le PDF est le bon d’édition, pas le pin.',
+    items: ['Bon de commande n° RC-120', 'Visuel 25 mm'],
+    pages: [require('../assets/images/starship.jpg')],
+  },
+  'loop-lavender': {
+    kind: 'audio',
+    fileName: 'Loop-Lavender.zip',
+    licence: 'Royalty-free pour tes films et lives Roux.',
+    items: ['8 loops WAV 24-bit', 'Stems drums / pad / vocal'],
+    pages: [require('../assets/images/lavender.jpg')],
+    mediaUri: SAMPLE_AUDIO,
+  },
+  'film-grain': {
+    kind: 'video',
+    fileName: 'Mini-film-Grain.mp4',
+    licence: 'Intro, reel, fond de live. Pas de revente du clip seul.',
+    items: ['MP4 1080p', 'ProRes (lien Library)'],
+    pages: [require('../assets/images/film.jpg')],
+    mediaUri: SAMPLE_VIDEO,
+  },
+  'carnet-riso': {
+    kind: 'print',
+    fileName: 'Carnet-Riso-scan.pdf',
+    licence: 'Objet physique. Le scan HD est pour archive membre / acheteur.',
+    items: ['Scan 48 pages PDF', 'Suivi d’expédition simulé'],
+    pages: [
+      require('../assets/images/carnet.jpg'),
+      require('../assets/images/cartes.jpg'),
+      require('../assets/images/jungle.jpg'),
+    ],
+  },
+  'cartes-jungle': {
+    kind: 'image',
+    fileName: 'Cartes-Jungle.pdf',
+    licence: 'Impression perso. Pas de revente des fichiers.',
+    items: ['6 cartes A6 PDF', 'PNG web'],
+    pages: [require('../assets/images/cartes.jpg'), require('../assets/images/jungle.jpg')],
+  },
+  'pack-icones': {
+    kind: 'pack',
+    fileName: 'Pack-Icones-Mina.zip',
+    licence: 'Un compte + un site.',
+    items: ['40 SVG', '40 PNG @2x'],
+    pages: [require('../assets/images/icones.jpg'), require('../assets/images/tigre.jpg')],
+  },
+};
+
+export function getProductFile(productId: string) {
+  return PRODUCT_FILES[productId];
+}
+
+export function fileKindLabel(kind: FileKind) {
+  switch (kind) {
+    case 'audio':
+      return 'Audio';
+    case 'video':
+      return 'Vidéo';
+    case 'pack':
+      return 'Pack';
+    case 'print':
+      return 'Document';
+    case 'image':
+      return 'Document';
+    default:
+      return 'Fichier';
+  }
+}
 
 export const CLUB_POSTS: ClubPost[] = [
   {
@@ -343,4 +462,72 @@ export function isIncludedInTier(product: Product, memberPrice: number | null | 
 export function canReadPost(post: ClubPost, memberPrice: number | null | undefined) {
   if (post.creatorId === ME_CREATOR_ID || post.minPrice === 0) return true;
   return (memberPrice ?? 0) >= post.minPrice;
+}
+
+export type DropKind = 'product' | 'club' | 'live';
+
+export type Drop = {
+  id: string;
+  creatorId: string;
+  productId?: string;
+  title: string;
+  time: string;
+  kind: DropKind;
+};
+
+export const DROPS: Drop[] = [
+  {
+    id: 'd1',
+    creatorId: 'mina',
+    productId: 'affiche-jungle',
+    title: 'Drop Affiche Jungle — édition 50',
+    time: 'il y a 2 h',
+    kind: 'product',
+  },
+  {
+    id: 'd2',
+    creatorId: 'mina',
+    title: 'Calques A3 dans le Club Jungle',
+    time: 'il y a 3 h',
+    kind: 'club',
+  },
+  {
+    id: 'd3',
+    creatorId: 'roux',
+    productId: 'typo-pixel',
+    title: 'Typo Pixel Roux à 19h',
+    time: 'il y a 5 h',
+    kind: 'product',
+  },
+  {
+    id: 'd4',
+    creatorId: 'leo',
+    productId: 'loop-lavender',
+    title: 'Live textures demain + Loop Lavender',
+    time: 'hier',
+    kind: 'live',
+  },
+  {
+    id: 'd5',
+    creatorId: 'nora',
+    productId: 'carnet-riso',
+    title: 'Carnet Riso Coral rentré (18 left)',
+    time: 'hier',
+    kind: 'product',
+  },
+];
+
+export function dropKindLabel(kind: DropKind) {
+  if (kind === 'live') return 'Live';
+  if (kind === 'club') return 'Club';
+  return 'Drop';
+}
+
+export function productsForMembers(memberships: Record<string, number>) {
+  const ids = Object.keys(memberships);
+  return PRODUCTS.filter((product) => ids.includes(product.creatorId));
+}
+
+export function dropsForMembers(memberships: Record<string, number>) {
+  return DROPS.filter((drop) => memberships[drop.creatorId] != null);
 }

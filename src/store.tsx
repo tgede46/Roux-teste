@@ -8,7 +8,15 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { CLUB_POSTS, getProduct, ME_CREATOR_ID, isIncludedInTier, type ClubPost } from './data';
+import {
+  CLUB_POSTS,
+  DROPS,
+  getCreator,
+  getProduct,
+  ME_CREATOR_ID,
+  isIncludedInTier,
+  type ClubPost,
+} from './data';
 
 const STORAGE_KEY = 'roux-store-v2';
 
@@ -23,6 +31,8 @@ export type Order = {
   price: number;
   at: number;
 };
+
+export type AccessKind = 'purchase' | 'member' | null;
 
 type Toast = {
   message: string;
@@ -57,7 +67,15 @@ type Store = {
   isMember: (creatorId: string) => boolean;
   memberPrice: (creatorId: string) => number | null;
   hasProductAccess: (productId: string) => boolean;
+  accessKind: (productId: string) => AccessKind;
+  opened: string[];
+  markOpened: (productId: string) => void;
+  isOpened: (productId: string) => boolean;
   isPostLiked: (id: string) => boolean;
+  readDropIds: string[];
+  unreadDropCount: number;
+  markDropRead: (id: string) => void;
+  markAllDropsRead: () => void;
   showToast: (message: string) => void;
   clearToast: () => void;
 };
@@ -71,6 +89,8 @@ type Persisted = {
   orders: Order[];
   likedPosts: string[];
   extraPosts: ClubPost[];
+  opened: string[];
+  readDropIds: string[];
   notifs: boolean;
 };
 
@@ -89,6 +109,8 @@ const defaults: Persisted = {
   orders: [],
   likedPosts: [],
   extraPosts: [],
+  opened: [],
+  readDropIds: [],
   notifs: true,
 };
 
@@ -102,7 +124,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const [extraPosts, setExtraPosts] = useState<ClubPost[]>([]);
-  const [notifs, setNotifs] = useState(true);
+  const [opened, setOpened] = useState<string[]>([]);
+  const [readDropIds, setReadDropIds] = useState<string[]>([]);
+  const [notifs, setNotifsState] = useState(true);
   const [toast, setToast] = useState<Toast | null>(null);
 
   useEffect(() => {
@@ -119,7 +143,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (parsed.orders) setOrders(parsed.orders);
         if (parsed.likedPosts) setLikedPosts(parsed.likedPosts);
         if (parsed.extraPosts) setExtraPosts(parsed.extraPosts);
-        if (typeof parsed.notifs === 'boolean') setNotifs(parsed.notifs);
+        if (parsed.opened) setOpened(parsed.opened);
+        if (parsed.readDropIds) setReadDropIds(parsed.readDropIds);
+        if (typeof parsed.notifs === 'boolean') setNotifsState(parsed.notifs);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -141,10 +167,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       orders,
       likedPosts,
       extraPosts,
+      opened,
+      readDropIds,
       notifs,
     };
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload)).catch(() => undefined);
-  }, [ready, user, favorites, owned, following, memberships, orders, likedPosts, extraPosts, notifs]);
+  }, [ready, user, favorites, owned, following, memberships, orders, likedPosts, extraPosts, opened, readDropIds, notifs]);
 
   const showToast = useCallback((message: string) => {
     setToast({ message });
@@ -171,10 +199,36 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
-  const subscribe = useCallback((creatorId: string, price: number) => {
-    setMemberships((current) => ({ ...current, [creatorId]: price }));
-    setFollowing((list) => (list.includes(creatorId) ? list : [...list, creatorId]));
+  const subscribe = useCallback(
+    (creatorId: string, price: number) => {
+      setMemberships((current) => ({ ...current, [creatorId]: price }));
+      setFollowing((list) => (list.includes(creatorId) ? list : [...list, creatorId]));
+      if (notifs) {
+        const name = getCreator(creatorId)?.name ?? 'Atelier';
+        showToast(`${name} droppe dans Pour toi`);
+      }
+    },
+    [notifs, showToast],
+  );
+
+  const setNotifs = useCallback((value: boolean) => {
+    setNotifsState(value);
   }, []);
+
+  const markDropRead = useCallback((id: string) => {
+    setReadDropIds((list) => (list.includes(id) ? list : [...list, id]));
+  }, []);
+
+  const markAllDropsRead = useCallback(() => {
+    setReadDropIds(DROPS.map((drop) => drop.id));
+  }, []);
+
+  const unreadDropCount = useMemo(() => {
+    if (!notifs) return 0;
+    const memberIds = Object.keys(memberships);
+    return DROPS.filter((drop) => memberIds.includes(drop.creatorId) && !readDropIds.includes(drop.id))
+      .length;
+  }, [notifs, memberships, readDropIds]);
 
   const unsubscribe = useCallback((creatorId: string) => {
     setMemberships((current) => {
@@ -198,6 +252,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
     [owned, memberships],
   );
+
+  const accessKind = useCallback(
+    (productId: string): AccessKind => {
+      if (owned.includes(productId)) return 'purchase';
+      const product = getProduct(productId);
+      if (!product) return null;
+      if (isIncludedInTier(product, memberships[product.creatorId] ?? null)) return 'member';
+      return null;
+    },
+    [owned, memberships],
+  );
+
+  const markOpened = useCallback((productId: string) => {
+    setOpened((list) => (list.includes(productId) ? list : [...list, productId]));
+  }, []);
 
   const addPost = useCallback((text: string) => {
     const trimmed = text.trim();
@@ -244,7 +313,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       isMember: (creatorId) => memberships[creatorId] != null,
       memberPrice,
       hasProductAccess,
+      accessKind,
+      opened,
+      markOpened,
+      isOpened: (id) => opened.includes(id),
       isPostLiked: (id) => likedPosts.includes(id),
+      readDropIds,
+      unreadDropCount,
+      markDropRead,
+      markAllDropsRead,
       showToast,
       clearToast: () => setToast(null),
     }),
@@ -258,6 +335,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       orders,
       likedPosts,
       extraPosts,
+      opened,
+      readDropIds,
       notifs,
       toast,
       login,
@@ -267,7 +346,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       unsubscribe,
       memberPrice,
       hasProductAccess,
+      accessKind,
+      markOpened,
+      unreadDropCount,
+      markDropRead,
+      markAllDropsRead,
       addPost,
+      setNotifs,
       showToast,
     ],
   );

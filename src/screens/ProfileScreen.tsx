@@ -55,7 +55,7 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
   };
 
   return (
-    <ScrollView style={styles.body} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.body} contentContainerStyle={styles.tabSceneContent}>
       <FadeSlideIn>
         <Text style={styles.title}>Profil</Text>
         <View style={styles.profileCard}>
@@ -101,13 +101,14 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
         <View style={styles.settingRow}>
           <View style={{ flex: 1, paddingRight: 12 }}>
             <Text style={styles.followName}>Notifications Club</Text>
-            <Text style={styles.followMeta}>Drops et lives des ateliers suivis</Text>
+            <Text style={styles.followMeta}>Drops et lives des ateliers dont tu es membre</Text>
           </View>
           <Switch
             value={notifs}
             onValueChange={(value) => {
               setNotifs(value);
               hapticSelect();
+              showToast(value ? 'Drops activés' : 'Drops coupés');
             }}
             trackColor={{ false: '#D8DDD8', true: colors.teal }}
             thumbColor={colors.white}
