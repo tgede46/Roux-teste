@@ -1,64 +1,84 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
-import { getProduct, PRODUCTS } from '../data';
+import { PressableScale } from '../components/PressableScale';
+import { ProductCard } from '../components/ProductCard';
+import { PRODUCTS } from '../data';
+import { hapticSelect } from '../haptics';
 import { useStore } from '../store';
-import { colors } from '../theme';
 import { homeStyles as styles } from './homeStyles';
+
+type Filter = 'all' | 'owned' | 'fav';
 
 type Props = {
   onOpenProduct: (id: string) => void;
+  onBrowse: () => void;
 };
 
-export function LibraryScreen({ onOpenProduct }: Props) {
+export function LibraryScreen({ onOpenProduct, onBrowse }: Props) {
   const { favorites, owned } = useStore();
+  const [filter, setFilter] = useState<Filter>('all');
+
   const liked = PRODUCTS.filter((product) => favorites.includes(product.id));
   const bought = PRODUCTS.filter((product) => owned.includes(product.id));
+  const items = useMemo(() => {
+    if (filter === 'owned') return bought;
+    if (filter === 'fav') return liked;
+    const ids = new Set([...owned, ...favorites]);
+    return PRODUCTS.filter((product) => ids.has(product.id));
+  }, [filter, liked, bought, owned, favorites]);
 
   return (
     <ScrollView style={styles.body} contentContainerStyle={styles.content}>
       <FadeSlideIn>
         <Text style={styles.title}>Library</Text>
-        <Text style={styles.sectionTitle}>Achats</Text>
-        {bought.length === 0 ? (
-          <Text style={styles.empty}>Rien encore. Ouvre un produit et appuie sur Acheter.</Text>
+        <View style={styles.chips}>
+          {(
+            [
+              { id: 'all', label: 'Tout' },
+              { id: 'owned', label: `Achats ${bought.length}` },
+              { id: 'fav', label: `Favoris ${liked.length}` },
+            ] as const
+          ).map((chip) => {
+            const active = filter === chip.id;
+            return (
+              <PressableScale
+                key={chip.id}
+                onPress={() => {
+                  hapticSelect();
+                  setFilter(chip.id);
+                }}
+                contentStyle={[styles.chip, active && styles.chipActive]}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{chip.label}</Text>
+              </PressableScale>
+            );
+          })}
+        </View>
+        {items.length === 0 ? (
+          <EmptyState
+            title={filter === 'fav' ? 'Aucun favori' : 'Library vide'}
+            body={
+              filter === 'fav'
+                ? 'Le cœur sur un produit le range ici.'
+                : 'Achète un pack, une affiche ou un loop — il apparaît ici tout de suite.'
+            }
+            actionLabel="Aller à la boutique"
+            onAction={onBrowse}
+          />
         ) : (
-          <View style={styles.products}>
-            {bought.map((product) => (
-              <ProductTile key={product.id} id={product.id} onPress={onOpenProduct} />
-            ))}
-          </View>
-        )}
-        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Favoris</Text>
-        {liked.length === 0 ? (
-          <Text style={styles.empty}>Le cœur jaune sur l’accueil mène ici.</Text>
-        ) : (
-          <View style={styles.products}>
-            {liked.map((product) => (
-              <ProductTile key={product.id} id={product.id} onPress={onOpenProduct} />
+          <View style={styles.productGrid}>
+            {items.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onPress={() => onOpenProduct(product.id)}
+              />
             ))}
           </View>
         )}
       </FadeSlideIn>
     </ScrollView>
-  );
-}
-
-function ProductTile({ id, onPress }: { id: string; onPress: (id: string) => void }) {
-  const product = getProduct(id);
-  if (!product) return null;
-  return (
-    <Pressable style={styles.product} onPress={() => onPress(product.id)}>
-      <View style={[styles.productArt, { backgroundColor: product.art }]} />
-      <View style={[styles.productInfo, { backgroundColor: product.infoBg }]}>
-        <Text style={[styles.productName, product.lightText && { color: colors.white }]}>
-          {product.name}
-        </Text>
-        <Text
-          style={[styles.productPrice, { color: product.lightText ? colors.white : colors.text }]}
-        >
-          {product.price} €
-        </Text>
-      </View>
-    </Pressable>
   );
 }

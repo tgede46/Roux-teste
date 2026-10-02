@@ -53,8 +53,14 @@ export const loginStyles = StyleSheet.create({
     borderColor: colors.text,
     borderRadius: 26,
   },
-  inputWrapFocused: {
-    borderColor: colors.teal,
+  inputWrapError: {
+    borderColor: '#C0392B',
+  },
+  fieldError: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: '#C0392B',
+    marginTop: 6,
   },
   inputRow: {
     flexDirection: 'row',
@@ -118,7 +124,7 @@ export const loginStyles = StyleSheet.create({
     color: colors.text,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,0.88)',
     alignItems: 'center',
     justifyContent: 'center',

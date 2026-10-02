@@ -10,9 +10,17 @@ type Props = {
   delay: number;
   shake: Animated.Value;
   isPassword?: boolean;
+  error?: string | null;
 } & ComponentProps<typeof TextInput>;
 
-export function AuthInput({ label, delay, shake, isPassword = false, ...inputProps }: Props) {
+export function AuthInput({
+  label,
+  delay,
+  shake,
+  isPassword = false,
+  error,
+  ...inputProps
+}: Props) {
   const [focused, setFocused] = useState(false);
   const [passwordHidden, setPasswordHidden] = useState(true);
   const focusAnim = useRef(new Animated.Value(0)).current;
@@ -44,6 +52,7 @@ export function AuthInput({ label, delay, shake, isPassword = false, ...inputPro
           style={[
             styles.inputWrap,
             focused && styles.inputWrapFocused,
+            !!error && styles.inputWrapError,
             { transform: [{ translateX: shakeX }, { scale }] },
           ]}
         >
@@ -81,6 +90,7 @@ export function AuthInput({ label, delay, shake, isPassword = false, ...inputPro
             ) : null}
           </View>
         </Animated.View>
+        {error ? <Text style={styles.fieldError}>{error}</Text> : null}
       </View>
     </FadeSlideIn>
   );

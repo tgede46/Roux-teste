@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AuthInput } from '../components/AuthInput';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { hapticError } from '../haptics';
+import { validateEmail, validateName, validatePassword } from '../validation';
 import { loginStyles as styles } from './loginStyles';
 
 function shakeField(anim: Animated.Value) {
@@ -31,42 +33,54 @@ export function LoginScreen({
   onForgot,
   onSignup,
   onBackToLogin,
+  onForgotSent,
 }: {
   mode: 'login' | 'signup' | 'forgot';
-  onLoggedIn: () => void;
+  onLoggedIn: (user: { name: string; email: string }) => void;
   onForgot: () => void;
   onSignup: () => void;
   onBackToLogin: () => void;
+  onForgotSent: () => void;
 }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pressedLink, setPressedLink] = useState<'forgot' | 'create' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
 
   const emailShake = useRef(new Animated.Value(0)).current;
+  const nameShake = useRef(new Animated.Value(0)).current;
   const passwordShake = useRef(new Animated.Value(0)).current;
   const buttonScale = useRef(new Animated.Value(1)).current;
   const buttonPulse = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    setLoading(false);
+    setErrors({});
+  }, [mode]);
+
   const onContinue = () => {
     if (loading) return;
 
-    const emailEmpty = email.trim().length === 0;
-    const passwordEmpty = mode !== 'forgot' && password.trim().length === 0;
-    const nameEmpty = mode === 'signup' && name.trim().length === 0;
+    const next = {
+      name: mode === 'signup' ? validateName(name) ?? undefined : undefined,
+      email: validateEmail(email) ?? undefined,
+      password: mode !== 'forgot' ? validatePassword(password) ?? undefined : undefined,
+    };
+    setErrors(next);
 
-    if (emailEmpty || passwordEmpty || nameEmpty) {
-      if (emailEmpty) shakeField(emailShake);
-      if (passwordEmpty) shakeField(passwordShake);
+    if (next.name || next.email || next.password) {
+      if (next.name) shakeField(nameShake);
+      if (next.email) shakeField(emailShake);
+      if (next.password) shakeField(passwordShake);
+      hapticError();
       Animated.sequence([
         Animated.timing(buttonScale, { toValue: 0.97, duration: 80, useNativeDriver: true }),
         Animated.spring(buttonScale, { toValue: 1, friction: 5, useNativeDriver: true }),
       ]).start();
       return;
     }
-
-    if (loading) return;
 
     Animated.sequence([
       Animated.timing(buttonScale, { toValue: 0.96, duration: 90, useNativeDriver: true }),
@@ -82,7 +96,17 @@ export function LoginScreen({
     }).start();
 
     setLoading(true);
-    setTimeout(onLoggedIn, 1400);
+    setTimeout(() => {
+      setLoading(false);
+      if (mode === 'forgot') {
+        onForgotSent();
+        return;
+      }
+      onLoggedIn({
+        name: (name.trim() || email.trim().split('@')[0] || 'Roux').replace(/\./g, ' '),
+        email: email.trim().toLowerCase(),
+      });
+    }, 1100);
   };
 
   const pulseScale = buttonPulse.interpolate({
@@ -122,10 +146,14 @@ export function LoginScreen({
             <AuthInput
               label="Nom"
               delay={160}
-              shake={emailShake}
+              shake={nameShake}
+              error={errors.name}
               value={name}
-              onChangeText={setName}
-              placeholder="Ton nom"
+              onChangeText={(value) => {
+                setName(value);
+                if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }));
+              }}
+              placeholder="Prénom et nom"
               autoCorrect={false}
             />
           ) : null}
@@ -134,12 +162,17 @@ export function LoginScreen({
             label="Email"
             delay={200}
             shake={emailShake}
+            error={errors.email}
             value={email}
-            onChangeText={setEmail}
-            placeholder="Email"
+            onChangeText={(value) => {
+              setEmail(value);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+            }}
+            placeholder="toi@roux.club"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            autoComplete="email"
           />
 
           {mode !== 'forgot' ? (
@@ -147,9 +180,13 @@ export function LoginScreen({
               label="Mot de passe"
               delay={280}
               shake={passwordShake}
+              error={errors.password}
               value={password}
-              onChangeText={setPassword}
-              placeholder="Mot de passe"
+              onChangeText={(value) => {
+                setPassword(value);
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+              }}
+              placeholder="6 caractères, lettres et chiffres"
               isPassword
               autoCapitalize="none"
               autoCorrect={false}
@@ -242,7 +279,7 @@ export function LoginScreen({
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#111111" />
           <Text style={styles.overlayText}>
-            {mode === 'forgot' ? 'Envoi du lien...' : 'Connexion...'}
+            {mode === 'forgot' ? 'Envoi du lien...' : mode === 'signup' ? 'Création du compte...' : 'Connexion...'}
           </Text>
         </View>
       ) : null}

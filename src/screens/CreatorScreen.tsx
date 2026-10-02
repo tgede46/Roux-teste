@@ -1,8 +1,11 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Avatar } from '../components/Avatar';
 import { FadeSlideIn } from '../components/FadeSlideIn';
+import { PressableScale } from '../components/PressableScale';
+import { ProductCard } from '../components/ProductCard';
 import { getCreator, productsByCreator } from '../data';
+import { hapticSelect, hapticSuccess } from '../haptics';
 import { useStore } from '../store';
-import { colors } from '../theme';
 import { homeStyles as styles } from './homeStyles';
 
 type Props = {
@@ -13,49 +16,56 @@ type Props = {
 
 export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
   const creator = getCreator(creatorId);
-  const { isFollowing, toggleFollow } = useStore();
+  const { isFollowing, toggleFollow, showToast } = useStore();
   const products = productsByCreator(creatorId);
 
   if (!creator) {
-    return null;
+    return (
+      <View style={styles.content}>
+        <Text style={styles.empty}>Créateur introuvable.</Text>
+        <PressableScale onPress={onBack} contentStyle={styles.ghostBtn}>
+          <Text style={styles.ghostBtnText}>Retour</Text>
+        </PressableScale>
+      </View>
+    );
   }
 
   const following = isFollowing(creator.id);
 
   return (
     <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-      <Pressable style={styles.headerLeft} onPress={onBack}>
+      <PressableScale style={styles.headerLeft} onPress={onBack}>
         <Text style={styles.chevron}>‹</Text>
         <Text style={styles.brand}>Retour</Text>
-      </Pressable>
+      </PressableScale>
       <FadeSlideIn>
-        <View style={[styles.profileAvatar, { backgroundColor: creator.color, marginTop: 16 }]} />
+        <Avatar photo={creator.photo} color={creator.color} size="lg" style={{ marginTop: 16 }} />
         <Text style={styles.title}>{creator.name}</Text>
-        <Text style={styles.detailBlurb}>{creator.bio}</Text>
-        <Pressable style={following ? styles.ghostBtn : styles.primaryBtn} onPress={() => toggleFollow(creator.id)}>
+        <Text style={styles.followMeta}>{creator.meta}</Text>
+        <Text style={[styles.detailBlurb, { marginTop: 10 }]}>{creator.bio}</Text>
+        <PressableScale
+          contentStyle={following ? styles.ghostBtn : styles.primaryBtn}
+          onPress={() => {
+            toggleFollow(creator.id);
+            if (following) hapticSelect();
+            else hapticSuccess();
+            showToast(following ? `Tu ne suis plus ${creator.name}` : `Tu suis ${creator.name}`);
+          }}
+        >
           <Text style={following ? styles.ghostBtnText : styles.primaryBtnText}>
             {following ? 'Ne plus suivre' : 'Suivre'}
           </Text>
-        </Pressable>
-        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>Boutique</Text>
-        <View style={styles.products}>
+        </PressableScale>
+        <Text style={[styles.sectionTitle, { marginTop: 28 }]}>
+          Boutique · {products.length}
+        </Text>
+        <View style={styles.productGrid}>
           {products.map((product) => (
-            <Pressable key={product.id} style={styles.product} onPress={() => onOpenProduct(product.id)}>
-              <View style={[styles.productArt, { backgroundColor: product.art }]} />
-              <View style={[styles.productInfo, { backgroundColor: product.infoBg }]}>
-                <Text style={[styles.productName, product.lightText && { color: colors.white }]}>
-                  {product.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.productPrice,
-                    { color: product.lightText ? colors.white : colors.text },
-                  ]}
-                >
-                  {product.price} €
-                </Text>
-              </View>
-            </Pressable>
+            <ProductCard
+              key={product.id}
+              product={product}
+              onPress={() => onOpenProduct(product.id)}
+            />
           ))}
         </View>
       </FadeSlideIn>

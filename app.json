@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Kotlin",
-    "slug": "Kotlin",
+    "name": "Roux",
+    "slug": "roux",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

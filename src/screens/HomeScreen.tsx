@@ -1,8 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Image, ScrollView, Text, TextInput, View } from 'react-native';
+import { Avatar } from '../components/Avatar';
+import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
-import { CATEGORIES, CREATORS, PRODUCTS, type CategoryId } from '../data';
+import { PressableScale } from '../components/PressableScale';
+import { ProductCard } from '../components/ProductCard';
+import { CATEGORIES, CREATORS, PRODUCTS, firstName, type CategoryId } from '../data';
+import { hapticSelect } from '../haptics';
 import { useStore } from '../store';
 import { colors } from '../theme';
 import { homeStyles as styles } from './homeStyles';
@@ -14,54 +19,67 @@ type Props = {
 };
 
 export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Props) {
-  const { following, favorites } = useStore();
+  const { following, favorites, user } = useStore();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CategoryId | null>(null);
 
   const followed = CREATORS.filter((creator) => following.includes(creator.id));
+  const needle = query.trim().toLowerCase();
 
   const products = useMemo(() => {
-    const needle = query.trim().toLowerCase();
     return PRODUCTS.filter((product) => {
       const matchesCategory = category ? product.category === category : true;
       const matchesQuery =
         needle.length === 0 ||
         product.name.toLowerCase().includes(needle) ||
-        product.category.toLowerCase().includes(needle);
+        product.category.toLowerCase().includes(needle) ||
+        product.blurb.toLowerCase().includes(needle);
       return matchesCategory && matchesQuery;
     });
-  }, [category, query]);
+  }, [category, needle]);
+
+  const creators = useMemo(() => {
+    if (!needle) return [];
+    return CREATORS.filter(
+      (creator) =>
+        creator.name.toLowerCase().includes(needle) || creator.meta.toLowerCase().includes(needle),
+    );
+  }, [needle]);
 
   return (
     <ScrollView
       style={styles.body}
       contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
       <FadeSlideIn delay={40} fromX={-12} fromY={0}>
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Text style={styles.chevron}>‹</Text>
-            <Text style={styles.brand}>Roux</Text>
-          </View>
-          <Pressable style={styles.heartWrap} onPress={onOpenFavorites}>
+          <Text style={styles.brand}>Roux</Text>
+          <PressableScale
+            style={styles.heartWrap}
+            onPress={() => {
+              hapticSelect();
+              onOpenFavorites();
+            }}
+            accessibilityLabel="Ouvrir les favoris"
+          >
             <Ionicons name="heart" size={22} color={colors.heart} />
             {favorites.length > 0 ? (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{favorites.length}</Text>
               </View>
-            ) : (
-              <Text style={styles.brand}>Roux</Text>
-            )}
-          </Pressable>
+            ) : null}
+          </PressableScale>
         </View>
       </FadeSlideIn>
 
-      <FadeSlideIn delay={100}>
+      <FadeSlideIn delay={90}>
+        <Text style={styles.greeting}>Salut {firstName(user?.name ?? 'toi')}</Text>
         <Text style={styles.title}>Accueil</Text>
       </FadeSlideIn>
 
-      <FadeSlideIn delay={160}>
+      <FadeSlideIn delay={140}>
         <View style={styles.search}>
           <Ionicons name="search" size={16} color={colors.placeholder} />
           <TextInput
@@ -70,79 +88,107 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites }: Pr
             placeholder="Rechercher créateur, produit..."
             placeholderTextColor={colors.placeholder}
             style={styles.searchInput}
+            returnKeyType="search"
           />
+          {query.length > 0 ? (
+            <PressableScale onPress={() => setQuery('')} hitSlop={8} accessibilityLabel="Effacer">
+              <Ionicons name="close-circle" size={18} color={colors.placeholder} />
+            </PressableScale>
+          ) : null}
         </View>
       </FadeSlideIn>
 
-      <FadeSlideIn delay={220}>
+      <FadeSlideIn delay={180}>
         <Text style={styles.sectionTitle}>Catégories</Text>
         <View style={styles.categories}>
           {CATEGORIES.map((item) => {
             const selected = category === item.id;
             return (
-              <Pressable
+              <PressableScale
                 key={item.id}
-                onPress={() => setCategory(selected ? null : item.id)}
-                style={[
-                  styles.category,
-                  { backgroundColor: item.color },
-                  selected && styles.categorySelected,
-                ]}
+                style={styles.categoryCol}
+                onPress={() => {
+                  hapticSelect();
+                  setCategory(selected ? null : item.id);
+                }}
               >
-                <Ionicons name={item.icon} size={22} color={colors.white} />
-                <Text style={styles.categoryLabel}>{item.id}</Text>
-              </Pressable>
+                <View style={[styles.category, selected && styles.categorySelected]}>
+                  <Image source={item.image} style={styles.categoryImage} resizeMode="cover" />
+                  <View style={styles.categoryScrim} />
+                  <Ionicons name={item.icon} size={22} color={colors.white} />
+                </View>
+                <Text style={styles.categoryLabel} numberOfLines={1}>
+                  {item.id}
+                </Text>
+              </PressableScale>
             );
           })}
         </View>
       </FadeSlideIn>
 
-      <FadeSlideIn delay={280}>
+      {creators.length > 0 ? (
+        <FadeSlideIn delay={200}>
+          <Text style={styles.sectionTitle}>Créateurs</Text>
+          {creators.map((creator) => (
+            <PressableScale
+              key={creator.id}
+              contentStyle={styles.followRow}
+              onPress={() => onOpenCreator(creator.id)}
+            >
+              <Avatar photo={creator.photo} color={creator.color} />
+              <View>
+                <Text style={styles.followName}>{creator.name}</Text>
+                <Text style={styles.followMeta}>{creator.meta}</Text>
+              </View>
+            </PressableScale>
+          ))}
+        </FadeSlideIn>
+      ) : null}
+
+      <FadeSlideIn delay={220}>
         <Text style={styles.sectionTitle}>Suivis</Text>
-        {followed.map((follow) => (
-          <Pressable
-            key={follow.id}
-            style={styles.followRow}
-            onPress={() => onOpenCreator(follow.id)}
-          >
-            <View style={[styles.avatar, { backgroundColor: follow.color }]} />
-            <View>
-              <Text style={styles.followName}>{follow.name}</Text>
-              <Text style={styles.followMeta}>{follow.meta}</Text>
-            </View>
-          </Pressable>
-        ))}
+        {followed.length === 0 ? (
+          <EmptyState
+            title="Personne pour l’instant"
+            body="Ouvre un atelier et appuie sur Suivre. Le Club te montrera leurs posts."
+          />
+        ) : (
+          followed.map((follow) => (
+            <PressableScale
+              key={follow.id}
+              contentStyle={styles.followRow}
+              onPress={() => onOpenCreator(follow.id)}
+            >
+              <Avatar photo={follow.photo} color={follow.color} />
+              <View>
+                <Text style={styles.followName}>{follow.name}</Text>
+                <Text style={styles.followMeta}>{follow.meta}</Text>
+              </View>
+            </PressableScale>
+          ))
+        )}
       </FadeSlideIn>
 
-      <FadeSlideIn delay={340}>
-        <Text style={styles.sectionTitle}>Populaires</Text>
+      <FadeSlideIn delay={260}>
+        <Text style={styles.sectionTitle}>Boutique</Text>
         {products.length === 0 ? (
-          <Text style={styles.empty}>Rien pour cette recherche. Change de catégorie ou de mot.</Text>
+          <EmptyState
+            title="Rien pour cette recherche"
+            body="Change de catégorie ou de mot. Essaie jungle, loop, riso…"
+            actionLabel="Tout voir"
+            onAction={() => {
+              setQuery('');
+              setCategory(null);
+            }}
+          />
         ) : (
-          <View style={[styles.products, styles.wrap]}>
+          <View style={styles.productGrid}>
             {products.map((product) => (
-              <Pressable
+              <ProductCard
                 key={product.id}
-                style={[styles.product, { minWidth: '47%', flexGrow: 1 }]}
+                product={product}
                 onPress={() => onOpenProduct(product.id)}
-              >
-                <View style={[styles.productArt, { backgroundColor: product.art }]} />
-                <View style={[styles.productInfo, { backgroundColor: product.infoBg }]}>
-                  <Text
-                    style={[styles.productName, product.lightText && { color: colors.white }]}
-                  >
-                    {product.name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.productPrice,
-                      { color: product.lightText ? colors.white : colors.text },
-                    ]}
-                  >
-                    {product.price} €
-                  </Text>
-                </View>
-              </Pressable>
+              />
             ))}
           </View>
         )}
