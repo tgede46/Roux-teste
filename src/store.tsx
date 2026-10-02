@@ -8,9 +8,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { CLUB_POSTS, getProduct, ME_CREATOR_ID, type ClubPost } from './data';
+import { CLUB_POSTS, getProduct, ME_CREATOR_ID, isIncludedInTier, type ClubPost } from './data';
 
-const STORAGE_KEY = 'roux-store-v1';
+const STORAGE_KEY = 'roux-store-v2';
 
 export type User = {
   name: string;
@@ -34,6 +34,7 @@ type Store = {
   favorites: string[];
   owned: string[];
   following: string[];
+  memberships: Record<string, number>;
   orders: Order[];
   likedPosts: string[];
   posts: ClubPost[];
@@ -44,6 +45,8 @@ type Store = {
   updateName: (name: string) => void;
   toggleFavorite: (id: string) => void;
   buy: (id: string) => boolean;
+  subscribe: (creatorId: string, price: number) => void;
+  unsubscribe: (creatorId: string) => void;
   toggleFollow: (id: string) => void;
   togglePostLike: (id: string) => void;
   addPost: (text: string) => void;
@@ -51,6 +54,9 @@ type Store = {
   isFavorite: (id: string) => boolean;
   isOwned: (id: string) => boolean;
   isFollowing: (id: string) => boolean;
+  isMember: (creatorId: string) => boolean;
+  memberPrice: (creatorId: string) => number | null;
+  hasProductAccess: (productId: string) => boolean;
   isPostLiked: (id: string) => boolean;
   showToast: (message: string) => void;
   clearToast: () => void;
@@ -61,6 +67,7 @@ type Persisted = {
   favorites: string[];
   owned: string[];
   following: string[];
+  memberships: Record<string, number>;
   orders: Order[];
   likedPosts: string[];
   extraPosts: ClubPost[];
@@ -78,6 +85,7 @@ const defaults: Persisted = {
   favorites: ['affiche-jungle'],
   owned: [],
   following: ['mina', 'roux', 'leo'],
+  memberships: {},
   orders: [],
   likedPosts: [],
   extraPosts: [],
@@ -90,6 +98,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>(defaults.favorites);
   const [owned, setOwned] = useState<string[]>([]);
   const [following, setFollowing] = useState<string[]>(defaults.following);
+  const [memberships, setMemberships] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<Order[]>([]);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const [extraPosts, setExtraPosts] = useState<ClubPost[]>([]);
@@ -106,6 +115,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (parsed.favorites) setFavorites(parsed.favorites);
         if (parsed.owned) setOwned(parsed.owned);
         if (parsed.following) setFollowing(parsed.following);
+        if (parsed.memberships) setMemberships(parsed.memberships);
         if (parsed.orders) setOrders(parsed.orders);
         if (parsed.likedPosts) setLikedPosts(parsed.likedPosts);
         if (parsed.extraPosts) setExtraPosts(parsed.extraPosts);
@@ -127,13 +137,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       favorites,
       owned,
       following,
+      memberships,
       orders,
       likedPosts,
       extraPosts,
       notifs,
     };
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload)).catch(() => undefined);
-  }, [ready, user, favorites, owned, following, orders, likedPosts, extraPosts, notifs]);
+  }, [ready, user, favorites, owned, following, memberships, orders, likedPosts, extraPosts, notifs]);
 
   const showToast = useCallback((message: string) => {
     setToast({ message });
@@ -160,6 +171,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return true;
   }, []);
 
+  const subscribe = useCallback((creatorId: string, price: number) => {
+    setMemberships((current) => ({ ...current, [creatorId]: price }));
+    setFollowing((list) => (list.includes(creatorId) ? list : [...list, creatorId]));
+  }, []);
+
+  const unsubscribe = useCallback((creatorId: string) => {
+    setMemberships((current) => {
+      const next = { ...current };
+      delete next[creatorId];
+      return next;
+    });
+  }, []);
+
+  const memberPrice = useCallback(
+    (creatorId: string) => memberships[creatorId] ?? null,
+    [memberships],
+  );
+
+  const hasProductAccess = useCallback(
+    (productId: string) => {
+      if (owned.includes(productId)) return true;
+      const product = getProduct(productId);
+      if (!product) return false;
+      return isIncludedInTier(product, memberships[product.creatorId] ?? null);
+    },
+    [owned, memberships],
+  );
+
   const addPost = useCallback((text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
@@ -169,6 +208,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         creatorId: ME_CREATOR_ID,
         text: trimmed,
         time: 'à l’instant',
+        minPrice: 0,
       },
       ...list,
     ]);
@@ -181,6 +221,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       favorites,
       owned,
       following,
+      memberships,
       orders,
       likedPosts,
       posts: [...extraPosts, ...CLUB_POSTS],
@@ -191,6 +232,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateName: (name) => setUser((current) => (current ? { ...current, name } : current)),
       toggleFavorite: (id) => setFavorites((list) => toggleId(list, id)),
       buy,
+      subscribe,
+      unsubscribe,
       toggleFollow: (id) => setFollowing((list) => toggleId(list, id)),
       togglePostLike: (id) => setLikedPosts((list) => toggleId(list, id)),
       addPost,
@@ -198,6 +241,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       isFavorite: (id) => favorites.includes(id),
       isOwned: (id) => owned.includes(id),
       isFollowing: (id) => following.includes(id),
+      isMember: (creatorId) => memberships[creatorId] != null,
+      memberPrice,
+      hasProductAccess,
       isPostLiked: (id) => likedPosts.includes(id),
       showToast,
       clearToast: () => setToast(null),
@@ -208,6 +254,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       favorites,
       owned,
       following,
+      memberships,
       orders,
       likedPosts,
       extraPosts,
@@ -216,6 +263,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       buy,
+      subscribe,
+      unsubscribe,
+      memberPrice,
+      hasProductAccess,
       addPost,
       showToast,
     ],

@@ -113,6 +113,7 @@ function AppShell() {
               <ProfileScreen
                 onOpenLibrary={openLibrary}
                 onOpenProduct={openProduct}
+                onOpenCreator={openCreator}
                 onLogout={() => {
                   logout();
                   setAuthMode('login');

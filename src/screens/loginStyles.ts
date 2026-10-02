@@ -53,6 +53,9 @@ export const loginStyles = StyleSheet.create({
     borderColor: colors.text,
     borderRadius: 26,
   },
+  inputWrapFocused: {
+    borderColor: colors.teal,
+  },
   inputWrapError: {
     borderColor: '#C0392B',
   },

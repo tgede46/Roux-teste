@@ -17,15 +17,15 @@ type Props = {
 };
 
 export function LibraryScreen({ onOpenProduct, onBrowse }: Props) {
-  const { favorites, owned } = useStore();
+  const { favorites, owned, hasProductAccess } = useStore();
   const [filter, setFilter] = useState<Filter>('all');
 
   const liked = PRODUCTS.filter((product) => favorites.includes(product.id));
-  const bought = PRODUCTS.filter((product) => owned.includes(product.id));
+  const bought = PRODUCTS.filter((product) => hasProductAccess(product.id));
   const items = useMemo(() => {
     if (filter === 'owned') return bought;
     if (filter === 'fav') return liked;
-    const ids = new Set([...owned, ...favorites]);
+    const ids = new Set([...owned, ...favorites, ...bought.map((product) => product.id)]);
     return PRODUCTS.filter((product) => ids.has(product.id));
   }, [filter, liked, bought, owned, favorites]);
 
@@ -37,7 +37,7 @@ export function LibraryScreen({ onOpenProduct, onBrowse }: Props) {
           {(
             [
               { id: 'all', label: 'Tout' },
-              { id: 'owned', label: `Achats ${bought.length}` },
+              { id: 'owned', label: `Possédés ${bought.length}` },
               { id: 'fav', label: `Favoris ${liked.length}` },
             ] as const
           ).map((chip) => {

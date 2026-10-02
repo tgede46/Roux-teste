@@ -27,7 +27,7 @@ export function ProductScreen({
   onOpenLibrary,
 }: Props) {
   const product = getProduct(productId);
-  const { buy, isOwned, toggleFavorite, isFavorite, showToast } = useStore();
+  const { buy, isOwned, toggleFavorite, isFavorite, showToast, hasProductAccess } = useStore();
   const [sheet, setSheet] = useState(false);
   const [paying, setPaying] = useState(false);
 
@@ -44,6 +44,7 @@ export function ProductScreen({
 
   const creator = getCreator(product.creatorId);
   const owned = isOwned(product.id);
+  const included = !owned && hasProductAccess(product.id);
   const liked = isFavorite(product.id);
   const related = relatedProducts(product);
 
@@ -97,15 +98,25 @@ export function ProductScreen({
           <PressableScale
             contentStyle={styles.primaryBtn}
             onPress={() => {
-              if (owned) {
+              if (owned || included) {
                 onOpenLibrary();
                 return;
               }
               setSheet(true);
             }}
           >
-            <Text style={styles.primaryBtnText}>{owned ? 'Voir dans Library' : 'Acheter'}</Text>
+            <Text style={styles.primaryBtnText}>
+              {owned ? 'Voir dans Library' : included ? 'Inclus dans ton abo' : 'Acheter'}
+            </Text>
           </PressableScale>
+          {!owned && !included && product.includedAt != null && creator ? (
+            <PressableScale
+              contentStyle={[styles.ghostBtn, { marginTop: 10 }]}
+              onPress={() => onOpenCreator(creator.id)}
+            >
+              <Text style={styles.ghostBtnText}>Ou inclus dès {product.includedAt} €/mois</Text>
+            </PressableScale>
+          ) : null}
         </FadeSlideIn>
         {related.length > 0 ? (
           <View style={{ marginTop: 28 }}>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Alert, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { PressableScale } from '../components/PressableScale';
-import { getProduct } from '../data';
+import { getCreator, getProduct } from '../data';
 import { hapticError, hapticSelect } from '../haptics';
 import { useStore } from '../store';
 import { colors } from '../theme';
@@ -13,11 +13,22 @@ type Props = {
   onLogout: () => void;
   onOpenLibrary: () => void;
   onOpenProduct: (id: string) => void;
+  onOpenCreator: (id: string) => void;
 };
 
-export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct }: Props) {
-  const { user, favorites, owned, following, orders, notifs, setNotifs, updateName, showToast } =
-    useStore();
+export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCreator }: Props) {
+  const {
+    user,
+    owned,
+    following,
+    memberships,
+    orders,
+    notifs,
+    setNotifs,
+    updateName,
+    showToast,
+    unsubscribe,
+  } = useStore();
   const [name, setName] = useState(user?.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
 
@@ -74,12 +85,12 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct }: Props)
         </View>
         <View style={styles.stats}>
           <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
-            <Text style={styles.statValue}>{following.length}</Text>
-            <Text style={styles.statLabel}>suivis</Text>
+            <Text style={styles.statValue}>{Object.keys(memberships).length}</Text>
+            <Text style={styles.statLabel}>abos</Text>
           </PressableScale>
           <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
-            <Text style={styles.statValue}>{favorites.length}</Text>
-            <Text style={styles.statLabel}>favoris</Text>
+            <Text style={styles.statValue}>{following.length}</Text>
+            <Text style={styles.statLabel}>suivis</Text>
           </PressableScale>
           <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
             <Text style={styles.statValue}>{owned.length}</Text>
@@ -102,6 +113,44 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct }: Props)
             thumbColor={colors.white}
           />
         </View>
+
+        <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Abonnements</Text>
+        {Object.keys(memberships).length === 0 ? (
+          <Text style={styles.empty}>Aucun palier. Ouvre un atelier et appuie sur S’abonner.</Text>
+        ) : (
+          Object.entries(memberships).map(([creatorId, price]) => {
+            const creator = getCreator(creatorId);
+            if (!creator) return null;
+            const tier = creator.tiers.find((item) => item.price === price);
+            return (
+              <View key={creatorId} style={styles.orderRow}>
+                <PressableScale onPress={() => onOpenCreator(creatorId)} style={{ flex: 1 }}>
+                  <Text style={styles.followName}>{creator.name}</Text>
+                  <Text style={styles.followMeta}>
+                    {tier?.name ?? 'Palier'} · {price} €/mois
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => {
+                    Alert.alert('Résilier', `Arrêter ${creator.name} ?`, [
+                      { text: 'Non', style: 'cancel' },
+                      {
+                        text: 'Résilier',
+                        style: 'destructive',
+                        onPress: () => {
+                          unsubscribe(creatorId);
+                          showToast('Abonnement résilié');
+                        },
+                      },
+                    ]);
+                  }}
+                >
+                  <Text style={styles.followMeta}>Résilier</Text>
+                </PressableScale>
+              </View>
+            );
+          })
+        )}
 
         <Text style={[styles.sectionTitle, { marginTop: 18 }]}>Commandes</Text>
         {orders.length === 0 ? (

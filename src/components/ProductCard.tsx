@@ -31,6 +31,16 @@ export function ProductCard({ product, onPress }: Props) {
         >
           {product.price} €
         </Text>
+        {product.includedAt != null ? (
+          <Text
+            style={[
+              styles.includeBadge,
+              product.lightText && { color: colors.white, opacity: 0.9 },
+            ]}
+          >
+            Inclus dès {product.includedAt} €
+          </Text>
+        ) : null}
       </View>
     </PressableScale>
   );

@@ -89,10 +89,10 @@ export const homeStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   categoryImage: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   categoryScrim: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.32)',
   },
   categoryLabel: {
@@ -493,5 +493,35 @@ export const homeStyles = StyleSheet.create({
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  includeBadge: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    color: colors.muted,
+    marginTop: 4,
+  },
+  memberHint: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: colors.teal,
+    marginBottom: 14,
+  },
+  tierRow: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  tierRowActive: {
+    borderColor: colors.text,
+  },
+  lockedText: {
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    color: colors.muted,
+    lineHeight: 22,
+    marginBottom: 10,
   },
 });
