@@ -7,6 +7,7 @@ import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
 import { fileKindLabel, getCreator, getProduct, getProductFile, relatedProducts } from '../data';
 import { hapticLight, hapticSuccess } from '../haptics';
+import { goBack, openCreator, openFile, openProduct } from '../nav';
 import type { ChargeOk } from '../payment';
 import { useStore } from '../store';
 import { colors } from '../theme';
@@ -15,19 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 type Props = {
   productId: string;
-  onBack: () => void;
-  onOpenCreator: (id: string) => void;
-  onOpenProduct: (id: string) => void;
-  onOpenFile: (id: string) => void;
 };
 
-export function ProductScreen({
-  productId,
-  onBack,
-  onOpenCreator,
-  onOpenProduct,
-  onOpenFile,
-}: Props) {
+export function ProductScreen({ productId }: Props) {
   const product = getProduct(productId);
   const { buy, isOwned, toggleFavorite, isFavorite, showToast, accessKind } = useStore();
   const [sheet, setSheet] = useState(false);
@@ -37,7 +28,7 @@ export function ProductScreen({
     return (
       <View style={styles.content}>
         <Text style={styles.empty}>Ce produit n’existe plus.</Text>
-        <PressableScale onPress={onBack} contentStyle={styles.ghostBtn}>
+        <PressableScale onPress={goBack} contentStyle={styles.ghostBtn}>
           <Text style={styles.ghostBtnText}>Retour</Text>
         </PressableScale>
       </View>
@@ -60,14 +51,14 @@ export function ProductScreen({
     showToast(`${product.name} est dans ta Library`);
     setPaying(false);
     setSheet(false);
-    onOpenFile(product.id);
+    openFile(product.id);
   };
 
   return (
     <>
       <ScrollView style={styles.body} contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <PressableScale style={styles.headerLeft} onPress={onBack}>
+          <PressableScale style={styles.headerLeft} onPress={goBack}>
             <Text style={styles.chevron}>‹</Text>
             <Text style={styles.brand}>Retour</Text>
           </PressableScale>
@@ -106,7 +97,7 @@ export function ProductScreen({
             </>
           ) : null}
           {creator ? (
-            <PressableScale contentStyle={styles.followRow} onPress={() => onOpenCreator(creator.id)}>
+            <PressableScale contentStyle={styles.followRow} onPress={() => openCreator(creator.id)}>
               <Avatar photo={creator.photo} color={creator.color} />
               <View>
                 <Text style={styles.followName}>{creator.name}</Text>
@@ -118,7 +109,7 @@ export function ProductScreen({
             contentStyle={styles.primaryBtn}
             onPress={() => {
               if (owned || included) {
-                onOpenFile(product.id);
+                openFile(product.id);
                 return;
               }
               setSheet(true);
@@ -136,7 +127,7 @@ export function ProductScreen({
           {!owned && !included && product.includedAt != null && creator ? (
             <PressableScale
               contentStyle={[styles.ghostBtn, { marginTop: 10 }]}
-              onPress={() => onOpenCreator(creator.id)}
+              onPress={() => openCreator(creator.id)}
             >
               <Text style={styles.ghostBtnText}>Ou inclus dès {product.includedAt} €/mois</Text>
             </PressableScale>
@@ -147,7 +138,7 @@ export function ProductScreen({
             <Text style={styles.sectionTitle}>Aussi dans Roux</Text>
             <View style={styles.productGrid}>
               {related.map((item) => (
-                <ProductCard key={item.id} product={item} onPress={() => onOpenProduct(item.id)} />
+                <ProductCard key={item.id} product={item} onPress={() => openProduct(item.id)} />
               ))}
             </View>
           </View>

@@ -5,19 +5,13 @@ import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { getCreator, getProduct } from '../data';
 import { hapticError, hapticSelect } from '../haptics';
+import { openCreator, openLibrary, openProduct, openStudio } from '../nav';
 import { useStore } from '../store';
 import { colors } from '../theme';
 import { validateName } from '../validation';
 import { homeStyles as styles } from './homeStyles';
 
-type Props = {
-  onLogout: () => void;
-  onOpenLibrary: () => void;
-  onOpenProduct: (id: string) => void;
-  onOpenCreator: (id: string) => void;
-};
-
-export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCreator }: Props) {
+export function ProfileScreen() {
   const {
     user,
     owned,
@@ -29,6 +23,7 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
     updateName,
     showToast,
     unsubscribe,
+    logout,
   } = useStore();
   const [name, setName] = useState(user?.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
@@ -51,7 +46,7 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
   const confirmLogout = () => {
     Alert.alert('Se déconnecter', 'Tes achats restent liés à ce compte sur l’appareil.', [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Se déconnecter', style: 'destructive', onPress: onLogout },
+      { text: 'Se déconnecter', style: 'destructive', onPress: logout },
     ]);
   };
 
@@ -84,16 +79,19 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
             </View>
           </View>
         </View>
+        <PressableScale contentStyle={[styles.ghostBtn, { marginTop: 12 }]} onPress={openStudio}>
+          <Text style={styles.ghostBtnText}>Ouvrir l’atelier</Text>
+        </PressableScale>
         <View style={styles.stats}>
-          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
+          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={openLibrary}>
             <Text style={styles.statValue}>{Object.keys(memberships).length}</Text>
             <Text style={styles.statLabel}>abos</Text>
           </PressableScale>
-          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
+          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={openLibrary}>
             <Text style={styles.statValue}>{following.length}</Text>
             <Text style={styles.statLabel}>suivis</Text>
           </PressableScale>
-          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={onOpenLibrary}>
+          <PressableScale style={styles.statCol} contentStyle={styles.stat} onPress={openLibrary}>
             <Text style={styles.statValue}>{owned.length}</Text>
             <Text style={styles.statLabel}>achats</Text>
           </PressableScale>
@@ -131,7 +129,7 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
               const tier = creator.tiers.find((item) => item.price === price);
               return (
                 <View key={creatorId} style={styles.orderRow}>
-                  <PressableScale onPress={() => onOpenCreator(creatorId)} style={{ flex: 1 }}>
+                  <PressableScale onPress={() => openCreator(creatorId)} style={{ flex: 1 }}>
                     <Text style={styles.followName}>{creator.name}</Text>
                     <Text style={styles.followMeta}>
                       {tier?.name ?? 'Palier'} · {price} €/mois
@@ -178,8 +176,8 @@ export function ProfileScreen({ onLogout, onOpenLibrary, onOpenProduct, onOpenCr
                   key={order.id}
                   contentStyle={styles.orderRow}
                   onPress={() => {
-                    if (order.kind === 'membership' && order.creatorId) onOpenCreator(order.creatorId);
-                    else if (product) onOpenProduct(product.id);
+                    if (order.kind === 'membership' && order.creatorId) openCreator(order.creatorId);
+                    else if (product) openProduct(product.id);
                   }}
                 >
                   <View style={{ flex: 1 }}>

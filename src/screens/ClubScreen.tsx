@@ -6,18 +6,15 @@ import { Avatar } from '../components/Avatar';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
-import { ME_CREATOR_ID, canReadPost, getCreator } from '../data';
+import { ME_CREATOR_ID, canReadPost, clubAuthor } from '../data';
 import { hapticError, hapticLight, hapticSelect } from '../haptics';
+import { openCreator, openStudio } from '../nav';
 import { useStore } from '../store';
 import { colors } from '../theme';
 import { validateClubPost } from '../validation';
 import { homeStyles as styles } from './homeStyles';
 
-type Props = {
-  onOpenCreator: (id: string) => void;
-};
-
-export function ClubScreen({ onOpenCreator }: Props) {
+export function ClubScreen() {
   const { posts, memberships, user, togglePostLike, isPostLiked, addPost, showToast, memberPrice } =
     useStore();
   const [onlyMembers, setOnlyMembers] = useState(false);
@@ -53,6 +50,9 @@ export function ClubScreen({ onOpenCreator }: Props) {
     >
       <FadeSlideIn>
         <Text style={styles.title}>Club</Text>
+        <PressableScale contentStyle={[styles.ghostBtn, { marginBottom: 12 }]} onPress={openStudio}>
+          <Text style={styles.ghostBtnText}>Écrire depuis l’atelier</Text>
+        </PressableScale>
         <Text style={styles.empty}>Le fil des ateliers. Les posts membres se débloquent avec un palier.</Text>
         <View style={styles.chips}>
           <PressableScale
@@ -108,25 +108,17 @@ export function ClubScreen({ onOpenCreator }: Props) {
         ) : (
           <Group inset={16}>
             {visible.map((post) => {
-            const creator =
-              post.creatorId === ME_CREATOR_ID
-                ? {
-                    id: ME_CREATOR_ID,
-                    name: user?.name ?? 'Toi',
-                    meta: 'Membre Roux',
-                    color: colors.starship,
-                  }
-                : getCreator(post.creatorId);
+            const creator = clubAuthor(post, user?.name);
             if (!creator) return null;
             const liked = isPostLiked(post.id);
             const canOpen = post.creatorId !== ME_CREATOR_ID;
-            const unlocked = canReadPost(post, memberPrice(post.creatorId));
+            const unlocked = canReadPost(post, memberPrice(post.creatorId), user?.email);
             return (
               <View key={post.id} style={styles.post}>
                 <PressableScale
                   contentStyle={styles.followRow}
                   onPress={() => {
-                    if (canOpen) onOpenCreator(creator.id);
+                    if (canOpen) openCreator(creator.id);
                   }}
                   disabled={!canOpen}
                 >
@@ -146,14 +138,18 @@ export function ClubScreen({ onOpenCreator }: Props) {
                     <Text style={styles.lockedText} numberOfLines={2}>
                       {post.text}
                     </Text>
-                    <PressableScale
-                      contentStyle={[styles.chip, styles.chipActive, { alignSelf: 'flex-start' }]}
-                      onPress={() => onOpenCreator(creator.id)}
-                    >
-                      <Text style={[styles.chipText, styles.chipTextActive]}>
-                        S’abonner dès {post.minPrice} € pour lire
-                      </Text>
-                    </PressableScale>
+                    {canOpen ? (
+                      <PressableScale
+                        contentStyle={[styles.chip, styles.chipActive, { alignSelf: 'flex-start' }]}
+                        onPress={() => openCreator(creator.id)}
+                      >
+                        <Text style={[styles.chipText, styles.chipTextActive]}>
+                          S’abonner dès {post.minPrice} € pour lire
+                        </Text>
+                      </PressableScale>
+                    ) : (
+                      <Text style={styles.followMeta}>Réservé palier {post.minPrice} €</Text>
+                    )}
                   </>
                 )}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

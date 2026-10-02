@@ -7,17 +7,16 @@ import { PressableScale } from '../components/PressableScale';
 import { ProductCard } from '../components/ProductCard';
 import { getCreator, productsByCreator, type Tier } from '../data';
 import { hapticSelect, hapticSuccess } from '../haptics';
+import { goBack, openProduct } from '../nav';
 import type { ChargeOk } from '../payment';
 import { useStore } from '../store';
 import { homeStyles as styles } from './homeStyles';
 
 type Props = {
   creatorId: string;
-  onBack: () => void;
-  onOpenProduct: (id: string) => void;
 };
 
-export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
+export function CreatorScreen({ creatorId }: Props) {
   const creator = getCreator(creatorId);
   const { isFollowing, toggleFollow, showToast, subscribe, unsubscribe, memberPrice } = useStore();
   const products = productsByCreator(creatorId);
@@ -30,7 +29,7 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
     return (
       <View style={styles.content}>
         <Text style={styles.empty}>Créateur introuvable.</Text>
-        <PressableScale onPress={onBack} contentStyle={styles.ghostBtn}>
+        <PressableScale onPress={goBack} contentStyle={styles.ghostBtn}>
           <Text style={styles.ghostBtnText}>Retour</Text>
         </PressableScale>
       </View>
@@ -82,7 +81,7 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
   return (
     <>
       <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-        <PressableScale style={styles.headerLeft} onPress={onBack}>
+        <PressableScale style={styles.headerLeft} onPress={goBack}>
           <Text style={styles.chevron}>‹</Text>
           <Text style={styles.brand}>Retour</Text>
         </PressableScale>
@@ -123,7 +122,7 @@ export function CreatorScreen({ creatorId, onBack, onOpenProduct }: Props) {
               <ProductCard
                 key={product.id}
                 product={product}
-                onPress={() => onOpenProduct(product.id)}
+                onPress={() => openProduct(product.id)}
               />
             ))}
           </View>

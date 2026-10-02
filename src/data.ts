@@ -52,6 +52,8 @@ export type ClubPost = {
   text: string;
   time: string;
   minPrice: number;
+  authorEmail?: string;
+  authorName?: string;
 };
 
 function tiers(names: [string, string, string], perks: [string, string, string]): Tier[] {
@@ -459,9 +461,29 @@ export function isIncludedInTier(product: Product, memberPrice: number | null | 
   return memberPrice >= product.includedAt;
 }
 
-export function canReadPost(post: ClubPost, memberPrice: number | null | undefined) {
-  if (post.creatorId === ME_CREATOR_ID || post.minPrice === 0) return true;
+export function canReadPost(
+  post: ClubPost,
+  memberPrice: number | null | undefined,
+  viewerEmail?: string | null,
+) {
+  if (post.creatorId === ME_CREATOR_ID) {
+    if (post.minPrice === 0) return true;
+    return Boolean(viewerEmail && post.authorEmail === viewerEmail);
+  }
+  if (post.minPrice === 0) return true;
   return (memberPrice ?? 0) >= post.minPrice;
+}
+
+export function clubAuthor(post: ClubPost, fallbackName?: string) {
+  if (post.creatorId === ME_CREATOR_ID) {
+    return {
+      id: ME_CREATOR_ID,
+      name: post.authorName ?? fallbackName ?? 'Toi',
+      meta: 'Atelier Roux',
+      color: colors.starship,
+    };
+  }
+  return getCreator(post.creatorId);
 }
 
 export type DropKind = 'product' | 'club' | 'live';
@@ -473,6 +495,8 @@ export type Drop = {
   title: string;
   time: string;
   kind: DropKind;
+  authorEmail?: string;
+  authorName?: string;
 };
 
 export const DROPS: Drop[] = [
@@ -528,6 +552,18 @@ export function productsForMembers(memberships: Record<string, number>) {
   return PRODUCTS.filter((product) => ids.includes(product.creatorId));
 }
 
-export function dropsForMembers(memberships: Record<string, number>) {
-  return DROPS.filter((drop) => memberships[drop.creatorId] != null);
+export function dropsForMembers(memberships: Record<string, number>, extra: Drop[] = []) {
+  return [...extra, ...DROPS].filter((drop) => memberships[drop.creatorId] != null);
+}
+
+export function dropAuthor(drop: Drop, fallbackName?: string) {
+  if (drop.creatorId === ME_CREATOR_ID) {
+    return {
+      id: ME_CREATOR_ID,
+      name: drop.authorName ?? fallbackName ?? 'Toi',
+      meta: 'Atelier Roux',
+      color: colors.starship,
+    };
+  }
+  return getCreator(drop.creatorId);
 }

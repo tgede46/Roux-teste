@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { usePathname, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,23 +13,29 @@ export type AppTab = 'home' | 'library' | 'club' | 'profile';
 
 const TABS: {
   id: AppTab;
+  href: '/' | '/library' | '/club' | '/profile';
   label: string;
   filled: keyof typeof Ionicons.glyphMap;
   outline: keyof typeof Ionicons.glyphMap;
 }[] = [
-  { id: 'home', label: 'Accueil', filled: 'home', outline: 'home-outline' },
-  { id: 'library', label: 'Bibliothèque', filled: 'albums', outline: 'albums-outline' },
-  { id: 'club', label: 'Club', filled: 'people', outline: 'people-outline' },
-  { id: 'profile', label: 'Profil', filled: 'person', outline: 'person-outline' },
+  { id: 'home', href: '/', label: 'Accueil', filled: 'home', outline: 'home-outline' },
+  { id: 'library', href: '/library', label: 'Bibliothèque', filled: 'albums', outline: 'albums-outline' },
+  { id: 'club', href: '/club', label: 'Club', filled: 'people', outline: 'people-outline' },
+  { id: 'profile', href: '/profile', label: 'Profil', filled: 'person', outline: 'person-outline' },
 ];
 
-type Props = {
-  active: AppTab;
-  onChange: (tab: AppTab) => void;
-};
+function tabFromPath(path: string): AppTab {
+  if (path.startsWith('/library')) return 'library';
+  if (path.startsWith('/club')) return 'club';
+  if (path.startsWith('/profile')) return 'profile';
+  return 'home';
+}
 
-export function TabBar({ active, onChange }: Props) {
+export function TabBar() {
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+  const router = useRouter();
+  const active = tabFromPath(pathname);
   const [reduceTransparency, setReduceTransparency] = useState(false);
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export function TabBar({ active, onChange }: Props) {
     >
       <View style={styles.tabBarShell}>
         {useGlass ? (
-          <BlurView intensity={40} tint="systemMaterialLight" style={styles.tabBarBlur} />
+          <BlurView intensity={80} tint="systemChromeMaterialLight" style={styles.tabBarBlur} />
         ) : null}
         <View
           style={[
@@ -69,7 +76,7 @@ export function TabBar({ active, onChange }: Props) {
                 accessibilityLabel={tab.label}
                 onPress={() => {
                   hapticSelect();
-                  onChange(tab.id);
+                  router.navigate(tab.href);
                 }}
               >
                 <Ionicons
@@ -84,7 +91,7 @@ export function TabBar({ active, onChange }: Props) {
                   style={[
                     styles.tabLabel,
                     { fontFamily: uiFont },
-                    isActive && styles.tabLabelActive,
+                    isActive && { color: colors.tint },
                   ]}
                 >
                   {tab.label}

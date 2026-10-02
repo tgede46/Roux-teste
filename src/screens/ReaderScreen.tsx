@@ -4,15 +4,15 @@ import { FadeSlideIn } from '../components/FadeSlideIn';
 import { FileContent } from '../components/FilePreview';
 import { PressableScale } from '../components/PressableScale';
 import { fileKindLabel, getProduct, getProductFile } from '../data';
+import { goBack } from '../nav';
 import { useStore } from '../store';
 import { homeStyles as styles } from './homeStyles';
 
 type Props = {
   productId: string;
-  onBack: () => void;
 };
 
-export function ReaderScreen({ productId, onBack }: Props) {
+export function ReaderScreen({ productId }: Props) {
   const product = getProduct(productId);
   const file = getProductFile(productId);
   const { hasProductAccess, accessKind, markOpened } = useStore();
@@ -27,7 +27,7 @@ export function ReaderScreen({ productId, onBack }: Props) {
     return (
       <View style={styles.content}>
         <Text style={styles.empty}>Ce fichier n’est pas dans ta Library.</Text>
-        <PressableScale onPress={onBack} contentStyle={styles.ghostBtn}>
+        <PressableScale onPress={goBack} contentStyle={styles.ghostBtn}>
           <Text style={styles.ghostBtnText}>Retour</Text>
         </PressableScale>
       </View>
@@ -38,7 +38,7 @@ export function ReaderScreen({ productId, onBack }: Props) {
 
   return (
     <ScrollView style={styles.body} contentContainerStyle={styles.content}>
-      <PressableScale style={styles.headerLeft} onPress={onBack}>
+      <PressableScale style={styles.headerLeft} onPress={goBack}>
         <Text style={styles.chevron}>‹</Text>
         <Text style={styles.brand}>Bibliothèque</Text>
       </PressableScale>

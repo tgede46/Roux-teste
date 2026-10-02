@@ -11,35 +11,41 @@ import {
   CATEGORIES,
   CREATORS,
   PRODUCTS,
+  ME_CREATOR_ID,
+  dropAuthor,
   dropKindLabel,
-  dropsForMembers,
   firstName,
-  getCreator,
   productsForMembers,
   type CategoryId,
 } from '../data';
 import { hapticSelect } from '../haptics';
+import { openCreator, openLibrary, openNotifs, openProduct } from '../nav';
 import { useStore } from '../store';
 import { colors } from '../theme';
 import { homeStyles as styles } from './homeStyles';
 
-type Props = {
-  onOpenProduct: (id: string) => void;
-  onOpenCreator: (id: string) => void;
-  onOpenFavorites: () => void;
-  onOpenNotifs: () => void;
-};
-
-export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOpenNotifs }: Props) {
-  const { following, favorites, user, memberships, unreadDropCount, readDropIds, markDropRead, notifs } =
-    useStore();
+export function HomeScreen() {
+  const {
+    following,
+    favorites,
+    user,
+    memberships,
+    unreadDropCount,
+    readDropIds,
+    markDropRead,
+    notifs,
+    drops,
+  } = useStore();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<CategoryId | null>(null);
 
   const followed = CREATORS.filter((creator) => following.includes(creator.id));
   const needle = query.trim().toLowerCase();
   const browsing = needle.length > 0 || category != null;
-  const memberDrops = dropsForMembers(memberships);
+  const memberDrops = drops.filter((drop) => {
+    if (drop.creatorId === ME_CREATOR_ID && drop.authorEmail === user?.email) return true;
+    return memberships[drop.creatorId] != null;
+  });
   const memberProducts = productsForMembers(memberships);
 
   const products = useMemo(() => {
@@ -77,7 +83,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               style={styles.heartBtn}
               onPress={() => {
                 hapticSelect();
-                onOpenNotifs();
+                openNotifs();
               }}
               accessibilityRole="button"
               accessibilityLabel="Ouvrir les drops"
@@ -93,7 +99,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               style={styles.heartBtn}
               onPress={() => {
                 hapticSelect();
-                onOpenFavorites();
+                openLibrary();
               }}
               accessibilityRole="button"
               accessibilityLabel="Ouvrir les favoris"
@@ -144,7 +150,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
           ) : (
             <Group inset={60}>
               {memberDrops.map((drop) => {
-                const creator = getCreator(drop.creatorId);
+                const creator = dropAuthor(drop, user?.name);
                 if (!creator) return null;
                 const unread = notifs && !readDropIds.includes(drop.id);
                 return (
@@ -153,11 +159,14 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
                     contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
                     onPress={() => {
                       markDropRead(drop.id);
-                      if (drop.productId) onOpenProduct(drop.productId);
-                      else onOpenCreator(drop.creatorId);
+                      if (drop.productId) openProduct(drop.productId);
+                      else if (drop.creatorId !== ME_CREATOR_ID) openCreator(drop.creatorId);
                     }}
                   >
-                    <Avatar photo={creator.photo} color={creator.color} />
+                    <Avatar
+                      photo={'photo' in creator ? creator.photo : undefined}
+                      color={creator.color}
+                    />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.followName}>{drop.title}</Text>
                       <Text style={styles.followMeta}>
@@ -179,7 +188,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
                   <ProductCard
                     key={product.id}
                     product={product}
-                    onPress={() => onOpenProduct(product.id)}
+                    onPress={() => openProduct(product.id)}
                   />
                 ))}
               </View>
@@ -224,7 +233,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               <PressableScale
                 key={creator.id}
                 contentStyle={styles.groupRow}
-                onPress={() => onOpenCreator(creator.id)}
+                onPress={() => openCreator(creator.id)}
               >
                 <Avatar photo={creator.photo} color={creator.color} />
                 <View style={{ flex: 1 }}>
@@ -251,7 +260,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               <PressableScale
                 key={follow.id}
                 contentStyle={styles.groupRow}
-                onPress={() => onOpenCreator(follow.id)}
+                onPress={() => openCreator(follow.id)}
               >
                 <Avatar photo={follow.photo} color={follow.color} />
                 <View style={{ flex: 1 }}>
@@ -283,7 +292,7 @@ export function HomeScreen({ onOpenProduct, onOpenCreator, onOpenFavorites, onOp
               <ProductCard
                 key={product.id}
                 product={product}
-                onPress={() => onOpenProduct(product.id)}
+                onPress={() => openProduct(product.id)}
               />
             ))}
           </View>

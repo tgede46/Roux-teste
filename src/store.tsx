@@ -17,6 +17,8 @@ import {
   ME_CREATOR_ID,
   isIncludedInTier,
   type ClubPost,
+  type Drop,
+  type DropKind,
 } from './data';
 import type { ChargeOk } from './payment';
 
@@ -75,6 +77,7 @@ type Store = {
   orders: Order[];
   likedPosts: string[];
   posts: ClubPost[];
+  drops: Drop[];
   notifs: boolean;
   toast: Toast | null;
   signIn: (email: string, password: string) => Promise<AuthResult>;
@@ -88,7 +91,8 @@ type Store = {
   unsubscribe: (creatorId: string) => void;
   toggleFollow: (id: string) => void;
   togglePostLike: (id: string) => void;
-  addPost: (text: string) => void;
+  addPost: (text: string, minPrice?: number) => void;
+  addDrop: (input: { title: string; kind: DropKind; productId?: string }) => void;
   setNotifs: (value: boolean) => void;
   isFavorite: (id: string) => boolean;
   isOwned: (id: string) => boolean;
@@ -113,6 +117,8 @@ type Persisted = {
   accounts: Account[];
   profiles: Record<string, ProfileSlice>;
   sessionEmail: string | null;
+  extraPosts: ClubPost[];
+  extraDrops: Drop[];
 };
 
 const StoreContext = createContext<Store | null>(null);
@@ -150,6 +156,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [likedPosts, setLikedPosts] = useState<string[]>([]);
   const [extraPosts, setExtraPosts] = useState<ClubPost[]>([]);
+  const [extraDrops, setExtraDrops] = useState<Drop[]>([]);
   const [opened, setOpened] = useState<string[]>([]);
   const [readDropIds, setReadDropIds] = useState<string[]>([]);
   const [notifs, setNotifsState] = useState(true);
@@ -163,7 +170,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setMemberships(next.memberships);
     setOrders(next.orders);
     setLikedPosts(next.likedPosts);
-    setExtraPosts(next.extraPosts);
     setOpened(next.opened);
     setReadDropIds(next.readDropIds);
     setNotifsState(next.notifs);
@@ -180,6 +186,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setAccounts(nextAccounts);
         setProfiles(nextProfiles);
+        const fromProfiles = Object.values(nextProfiles).flatMap((slice) => slice.extraPosts ?? []);
+        const nextPosts = [...(parsed.extraPosts ?? []), ...fromProfiles];
+        const seen = new Set<string>();
+        setExtraPosts(
+          nextPosts.filter((post) => {
+            if (seen.has(post.id)) return false;
+            seen.add(post.id);
+            return true;
+          }),
+        );
+        if (parsed.extraDrops) setExtraDrops(parsed.extraDrops);
         const session = parsed.sessionEmail;
         const account = nextAccounts.find((item) => item.email === session);
         if (account) {
@@ -207,7 +224,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         memberships,
         orders,
         likedPosts,
-        extraPosts,
+        extraPosts: [],
         opened,
         readDropIds,
         notifs,
@@ -217,6 +234,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       accounts,
       profiles: nextProfiles,
       sessionEmail: user?.email ?? null,
+      extraPosts,
+      extraDrops,
     };
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(payload)).catch(() => undefined);
   }, [
@@ -231,6 +250,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     orders,
     likedPosts,
     extraPosts,
+    extraDrops,
     opened,
     readDropIds,
     notifs,
@@ -298,7 +318,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           memberships,
           orders,
           likedPosts,
-          extraPosts,
+          extraPosts: [],
           opened,
           readDropIds,
           notifs,
@@ -315,7 +335,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     memberships,
     orders,
     likedPosts,
-    extraPosts,
+    extraDrops,
     opened,
     readDropIds,
     notifs,
@@ -383,15 +403,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const markAllDropsRead = useCallback(() => {
-    setReadDropIds(DROPS.map((drop) => drop.id));
-  }, []);
+    setReadDropIds([...extraDrops, ...DROPS].map((drop) => drop.id));
+  }, [extraDrops]);
+
+  const drops = useMemo(() => [...extraDrops, ...DROPS], [extraDrops]);
 
   const unreadDropCount = useMemo(() => {
     if (!notifs) return 0;
-    const memberIds = Object.keys(memberships);
-    return DROPS.filter((drop) => memberIds.includes(drop.creatorId) && !readDropIds.includes(drop.id))
-      .length;
-  }, [notifs, memberships, readDropIds]);
+    return drops.filter((drop) => {
+      const mine = drop.creatorId === ME_CREATOR_ID && drop.authorEmail === user?.email;
+      const member = memberships[drop.creatorId] != null;
+      return (mine || member) && !readDropIds.includes(drop.id);
+    }).length;
+  }, [notifs, drops, memberships, readDropIds, user?.email]);
 
   const unsubscribe = useCallback((creatorId: string) => {
     setMemberships((current) => {
@@ -431,20 +455,46 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setOpened((list) => (list.includes(productId) ? list : [...list, productId]));
   }, []);
 
-  const addPost = useCallback((text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    setExtraPosts((list) => [
-      {
-        id: `me-${Date.now()}`,
-        creatorId: ME_CREATOR_ID,
-        text: trimmed,
-        time: 'à l’instant',
-        minPrice: 0,
-      },
-      ...list,
-    ]);
-  }, []);
+  const addPost = useCallback(
+    (text: string, minPrice = 0) => {
+      const trimmed = text.trim();
+      if (!trimmed || !user) return;
+      setExtraPosts((list) => [
+        {
+          id: `me-${Date.now()}`,
+          creatorId: ME_CREATOR_ID,
+          text: trimmed,
+          time: 'à l’instant',
+          minPrice,
+          authorEmail: user.email,
+          authorName: user.name,
+        },
+        ...list,
+      ]);
+    },
+    [user],
+  );
+
+  const addDrop = useCallback(
+    (input: { title: string; kind: DropKind; productId?: string }) => {
+      const title = input.title.trim();
+      if (!title || !user) return;
+      setExtraDrops((list) => [
+        {
+          id: `drop-${Date.now()}`,
+          creatorId: ME_CREATOR_ID,
+          title,
+          time: 'à l’instant',
+          kind: input.kind,
+          productId: input.productId,
+          authorEmail: user.email,
+          authorName: user.name,
+        },
+        ...list,
+      ]);
+    },
+    [user],
+  );
 
   const value = useMemo<Store>(
     () => ({
@@ -457,6 +507,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       orders,
       likedPosts,
       posts: [...extraPosts, ...CLUB_POSTS],
+      drops,
       notifs,
       toast,
       signIn,
@@ -476,6 +527,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleFollow: (id) => setFollowing((list) => toggleId(list, id)),
       togglePostLike: (id) => setLikedPosts((list) => toggleId(list, id)),
       addPost,
+      addDrop,
       setNotifs,
       isFavorite: (id) => favorites.includes(id),
       isOwned: (id) => owned.includes(id),
@@ -505,6 +557,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       orders,
       likedPosts,
       extraPosts,
+      extraDrops,
+      drops,
       opened,
       readDropIds,
       notifs,
@@ -524,6 +578,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       markDropRead,
       markAllDropsRead,
       addPost,
+      addDrop,
       setNotifs,
       showToast,
     ],

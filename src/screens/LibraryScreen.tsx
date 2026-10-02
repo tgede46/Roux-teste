@@ -6,18 +6,13 @@ import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
 import { PRODUCTS, fileKindLabel, getProductFile } from '../data';
 import { hapticSelect } from '../haptics';
+import { openFile, openHome, openProduct } from '../nav';
 import { useStore, type AccessKind } from '../store';
 import { homeStyles as styles } from './homeStyles';
 
 type Filter = 'purchase' | 'member' | 'fav';
 
-type Props = {
-  onOpenProduct: (id: string) => void;
-  onOpenFile: (id: string) => void;
-  onBrowse: () => void;
-};
-
-export function LibraryScreen({ onOpenProduct, onOpenFile, onBrowse }: Props) {
+export function LibraryScreen() {
   const { favorites, accessKind, isOpened } = useStore();
   const [filter, setFilter] = useState<Filter>('purchase');
 
@@ -75,7 +70,7 @@ export function LibraryScreen({ onOpenProduct, onOpenFile, onBrowse }: Props) {
                   : 'Achète un pack — il s’ouvre ici tout de suite.'
             }
             actionLabel="Aller à la boutique"
-            onAction={onBrowse}
+            onAction={openHome}
           />
         ) : (
           <Group inset={80}>
@@ -87,7 +82,7 @@ export function LibraryScreen({ onOpenProduct, onOpenFile, onBrowse }: Props) {
                 <PressableScale
                   key={product.id}
                   contentStyle={styles.libraryRow}
-                  onPress={() => (canOpen ? onOpenFile(product.id) : onOpenProduct(product.id))}
+                  onPress={() => (canOpen ? openFile(product.id) : openProduct(product.id))}
                 >
                   <Image source={product.image} style={styles.libraryThumb} resizeMode="cover" />
                   <View style={styles.libraryMeta}>

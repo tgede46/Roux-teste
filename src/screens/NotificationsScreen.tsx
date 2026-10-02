@@ -4,27 +4,24 @@ import { EmptyState } from '../components/EmptyState';
 import { FadeSlideIn } from '../components/FadeSlideIn';
 import { Group } from '../components/Group';
 import { PressableScale } from '../components/PressableScale';
-import { DROPS, dropKindLabel, getCreator } from '../data';
+import { ME_CREATOR_ID, dropAuthor, dropKindLabel } from '../data';
 import { hapticSelect } from '../haptics';
+import { goBack, openCreator, openProduct } from '../nav';
 import { useStore } from '../store';
 import { homeStyles as styles } from './homeStyles';
 
-type Props = {
-  onBack: () => void;
-  onOpenCreator: (id: string) => void;
-  onOpenProduct: (id: string) => void;
-};
-
-export function NotificationsScreen({ onBack, onOpenCreator, onOpenProduct }: Props) {
-  const { memberships, notifs, readDropIds, markDropRead, markAllDropsRead, unreadDropCount } =
+export function NotificationsScreen() {
+  const { user, memberships, notifs, readDropIds, markDropRead, markAllDropsRead, unreadDropCount, drops } =
     useStore();
-  const memberIds = Object.keys(memberships);
-  const items = DROPS.filter((drop) => memberIds.includes(drop.creatorId));
+  const items = drops.filter((drop) => {
+    if (drop.creatorId === ME_CREATOR_ID && drop.authorEmail === user?.email) return true;
+    return memberships[drop.creatorId] != null;
+  });
 
   return (
     <ScrollView style={styles.body} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <PressableScale style={styles.headerLeft} onPress={onBack}>
+        <PressableScale style={styles.headerLeft} onPress={goBack}>
           <Text style={styles.chevron}>‹</Text>
           <Text style={styles.brand}>Retour</Text>
         </PressableScale>
@@ -52,7 +49,7 @@ export function NotificationsScreen({ onBack, onOpenCreator, onOpenProduct }: Pr
         ) : (
           <Group inset={60}>
             {items.map((drop) => {
-              const creator = getCreator(drop.creatorId);
+              const creator = dropAuthor(drop, user?.name);
               if (!creator) return null;
               const unread = notifs && !readDropIds.includes(drop.id);
               return (
@@ -61,11 +58,14 @@ export function NotificationsScreen({ onBack, onOpenCreator, onOpenProduct }: Pr
                   contentStyle={[styles.dropRow, unread && styles.dropRowUnread]}
                   onPress={() => {
                     markDropRead(drop.id);
-                    if (drop.productId) onOpenProduct(drop.productId);
-                    else onOpenCreator(drop.creatorId);
+                    if (drop.productId) openProduct(drop.productId);
+                    else if (drop.creatorId !== ME_CREATOR_ID) openCreator(drop.creatorId);
                   }}
                 >
-                  <Avatar photo={creator.photo} color={creator.color} />
+                  <Avatar
+                    photo={'photo' in creator ? creator.photo : undefined}
+                    color={creator.color}
+                  />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.followName}>{drop.title}</Text>
                     <Text style={styles.followMeta}>
